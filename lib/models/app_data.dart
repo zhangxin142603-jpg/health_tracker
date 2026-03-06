@@ -1,0 +1,83 @@
+import 'baby_entries.dart';
+
+class AppData {
+  final List<FeedingEntry> feedingEntries;
+  final List<MedEntry> medEntries;
+  final List<DiaperEntry> diaperEntries;
+  final List<SolidFoodEntry> solidFoodEntries;
+  final List<SleepEntry> sleepEntries;
+
+  AppData({
+    List<FeedingEntry>? feedingEntries,
+    List<MedEntry>? medEntries,
+    List<DiaperEntry>? diaperEntries,
+    List<SolidFoodEntry>? solidFoodEntries,
+    List<SleepEntry>? sleepEntries,
+  })  : feedingEntries = feedingEntries ?? [],
+        medEntries = medEntries ?? [],
+        diaperEntries = diaperEntries ?? [],
+        solidFoodEntries = solidFoodEntries ?? [],
+        sleepEntries = sleepEntries ?? [];
+
+  Map<String, dynamic> toJson() => {
+        'feedingEntries': feedingEntries.map((e) => e.toJson()).toList(),
+        'medEntries': medEntries.map((e) => e.toJson()).toList(),
+        'diaperEntries': diaperEntries.map((e) => e.toJson()).toList(),
+        'solidFoodEntries': solidFoodEntries.map((e) => e.toJson()).toList(),
+        'sleepEntries': sleepEntries.map((e) => e.toJson()).toList(),
+      };
+
+  factory AppData.fromJson(Map<String, dynamic> json) => AppData(
+        feedingEntries: (json['feedingEntries'] as List? ?? [])
+            .map((e) => FeedingEntry.fromJson(e as Map<String, dynamic>))
+            .toList(),
+        medEntries: (json['medEntries'] as List? ?? [])
+            .map((e) => MedEntry.fromJson(e as Map<String, dynamic>))
+            .toList(),
+        diaperEntries: (json['diaperEntries'] as List? ?? [])
+            .map((e) => DiaperEntry.fromJson(e as Map<String, dynamic>))
+            .toList(),
+        solidFoodEntries: (json['solidFoodEntries'] as List? ?? [])
+            .map((e) => SolidFoodEntry.fromJson(e as Map<String, dynamic>))
+            .toList(),
+        sleepEntries: (json['sleepEntries'] as List? ?? [])
+            .map((e) => SleepEntry.fromJson(e as Map<String, dynamic>))
+            .toList(),
+      );
+
+  AppData copyWith({
+    List<FeedingEntry>? feedingEntries,
+    List<MedEntry>? medEntries,
+    List<DiaperEntry>? diaperEntries,
+    List<SolidFoodEntry>? solidFoodEntries,
+    List<SleepEntry>? sleepEntries,
+  }) =>
+      AppData(
+        feedingEntries: feedingEntries ?? this.feedingEntries,
+        medEntries: medEntries ?? this.medEntries,
+        diaperEntries: diaperEntries ?? this.diaperEntries,
+        solidFoodEntries: solidFoodEntries ?? this.solidFoodEntries,
+        sleepEntries: sleepEntries ?? this.sleepEntries,
+      );
+
+  AppData addFeeding(FeedingEntry e) =>
+      copyWith(feedingEntries: [...feedingEntries, e]);
+  AppData addMed(MedEntry e) => copyWith(medEntries: [...medEntries, e]);
+  AppData addDiaper(DiaperEntry e) =>
+      copyWith(diaperEntries: [...diaperEntries, e]);
+  AppData addSolidFood(SolidFoodEntry e) =>
+      copyWith(solidFoodEntries: [...solidFoodEntries, e]);
+  AppData addSleep(SleepEntry e) =>
+      copyWith(sleepEntries: [...sleepEntries, e]);
+
+  AppData removeFeeding(String id) => copyWith(
+      feedingEntries: feedingEntries.where((e) => e.id != id).toList());
+  AppData removeMed(String id) =>
+      copyWith(medEntries: medEntries.where((e) => e.id != id).toList());
+  AppData removeDiaper(String id) => copyWith(
+      diaperEntries: diaperEntries.where((e) => e.id != id).toList());
+  AppData removeSolidFood(String id) => copyWith(
+      solidFoodEntries: solidFoodEntries.where((e) => e.id != id).toList());
+  AppData removeSleep(String id) =>
+      copyWith(sleepEntries: sleepEntries.where((e) => e.id != id).toList());
+}

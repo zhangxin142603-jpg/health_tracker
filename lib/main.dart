@@ -1,53 +1,70 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import 'providers/health_provider.dart';
-import 'models/water_entry.dart';
-import 'models/medication_entry.dart';
+import 'providers/app_provider.dart';
+import 'models/baby_entries.dart';
+import 'screens/feeding_page.dart';
+import 'screens/medication_page.dart';
+import 'screens/diaper_page.dart';
+import 'screens/solid_food_page.dart';
+import 'screens/sleep_page.dart';
 
 void main() {
-  runApp(const HealthTrackerApp());
+  runApp(const BabyTrackerApp());
 }
 
-const Color kPrimary = Color(0xFF7C6FF7);
+const Color kPrimary = Color(0xFF7B6CF6);
 const Color kPrimaryLight = Color(0xFF9B8FF9);
 
-class HealthTrackerApp extends StatelessWidget {
-  const HealthTrackerApp({super.key});
+class BabyTrackerApp extends StatelessWidget {
+  const BabyTrackerApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (context) => HealthProvider(),
+      create: (_) => AppProvider(),
       child: MaterialApp(
-        title: '健康记录',
+        title: '宝宝记录',
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: kPrimary),
           useMaterial3: true,
+          fontFamily: 'PingFang SC',
         ),
-        home: const HealthTrackerHome(),
+        home: const HomePage(),
         debugShowCheckedModeBanner: false,
       ),
     );
   }
 }
 
-class _TimelineItem {
+// ─── Timeline entry (unified) ─────────────────────────────────────────────────
+
+class _Entry {
   final DateTime timestamp;
-  final String type; // 'water' | 'medication'
+  final String type;
+  final String id;
   final dynamic data;
-  _TimelineItem({required this.timestamp, required this.type, required this.data});
+
+  _Entry({
+    required this.timestamp,
+    required this.type,
+    required this.id,
+    required this.data,
+  });
 }
 
-class HealthTrackerHome extends StatefulWidget {
-  const HealthTrackerHome({super.key});
+// ─── Home Page ────────────────────────────────────────────────────────────────
+
+class HomePage extends StatefulWidget {
+  const HomePage({super.key});
 
   @override
-  State<HealthTrackerHome> createState() => _HealthTrackerHomeState();
+  State<HomePage> createState() => _HomePageState();
 }
 
-class _HealthTrackerHomeState extends State<HealthTrackerHome> {
+class _HomePageState extends State<HomePage> {
   DateTime _selectedDate = DateTime.now();
+  String _filter = '全部'; // '全部' | 'feeding' | 'med' | 'diaper' | 'solidFood' | 'sleep'
 
   bool get _isToday {
     final now = DateTime.now();
@@ -56,46 +73,88 @@ class _HealthTrackerHomeState extends State<HealthTrackerHome> {
         _selectedDate.day == now.day;
   }
 
-  void _prevDay() => setState(() => _selectedDate = _selectedDate.subtract(const Duration(days: 1)));
+  bool _sameDay(DateTime dt) =>
+      dt.year == _selectedDate.year &&
+      dt.month == _selectedDate.month &&
+      dt.day == _selectedDate.day;
+
+  List<_Entry> _buildEntries(AppProvider p) {
+    final all = <_Entry>[
+      ...p.feedingEntries
+          .where((e) => _sameDay(e.timestamp))
+          .map((e) =>
+              _Entry(timestamp: e.timestamp, type: 'feeding', id: e.id, data: e)),
+      ...p.medEntries
+          .where((e) => _sameDay(e.timestamp))
+          .map((e) =>
+              _Entry(timestamp: e.timestamp, type: 'med', id: e.id, data: e)),
+      ...p.diaperEntries
+          .where((e) => _sameDay(e.timestamp))
+          .map((e) =>
+              _Entry(timestamp: e.timestamp, type: 'diaper', id: e.id, data: e)),
+      ...p.solidFoodEntries
+          .where((e) => _sameDay(e.timestamp))
+          .map((e) => _Entry(
+              timestamp: e.timestamp, type: 'solidFood', id: e.id, data: e)),
+      ...p.sleepEntries
+          .where((e) => _sameDay(e.startTime))
+          .map((e) => _Entry(
+              timestamp: e.startTime, type: 'sleep', id: e.id, data: e)),
+    ]..sort((a, b) => a.timestamp.compareTo(b.timestamp));
+
+    if (_filter == '全部') return all;
+    return all.where((e) => e.type == _filter).toList();
+  }
+
+  void _prevDay() =>
+      setState(() => _selectedDate = _selectedDate.subtract(const Duration(days: 1)));
+
   void _nextDay() {
-    final tomorrow = _selectedDate.add(const Duration(days: 1));
-    if (!tomorrow.isAfter(DateTime.now())) {
-      setState(() => _selectedDate = tomorrow);
+    final next = _selectedDate.add(const Duration(days: 1));
+    if (!next.isAfter(DateTime.now())) {
+      setState(() => _selectedDate = next);
     }
   }
 
   Future<void> _pickDate() async {
-    final picked = await showDatePicker(
+    final p = await showDatePicker(
       context: context,
       initialDate: _selectedDate,
       firstDate: DateTime(2020),
       lastDate: DateTime.now(),
     );
-    if (picked != null) setState(() => _selectedDate = picked);
+    if (p != null) setState(() => _selectedDate = p);
   }
 
   @override
   Widget build(BuildContext context) {
-    final provider = Provider.of<HealthProvider>(context);
-
-    final waterToday = provider.waterEntries.where((e) => _sameDay(e.timestamp)).toList();
-    final medToday = provider.medicationEntries.where((e) => _sameDay(e.timestamp)).toList();
-
-    final items = <_TimelineItem>[
-      ...waterToday.map((e) => _TimelineItem(timestamp: e.timestamp, type: 'water', data: e)),
-      ...medToday.map((e) => _TimelineItem(timestamp: e.timestamp, type: 'medication', data: e)),
-    ]..sort((a, b) => a.timestamp.compareTo(b.timestamp));
+    final provider = Provider.of<AppProvider>(context);
+    final entries = _buildEntries(provider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F2F7),
+      backgroundColor: kPrimary,
       body: Column(
         children: [
           _buildHeader(),
-          _buildSummary(waterToday.length, medToday.length),
           Expanded(
-            child: items.isEmpty
-                ? _buildEmpty()
-                : _buildTimeline(items, provider),
+            child: Container(
+              decoration: const BoxDecoration(
+                color: Color(0xFFF5F5F7),
+                borderRadius:
+                    BorderRadius.vertical(top: Radius.circular(20)),
+              ),
+              child: Column(
+                children: [
+                  _buildFilterBar(provider),
+                  _buildSummaryBar(provider),
+                  Expanded(
+                    child: entries.isEmpty
+                        ? _buildEmpty()
+                        : _buildTimeline(entries, provider),
+                  ),
+                ],
+              ),
+            ),
           ),
           _buildBottomBar(provider),
         ],
@@ -103,84 +162,168 @@ class _HealthTrackerHomeState extends State<HealthTrackerHome> {
     );
   }
 
-  bool _sameDay(DateTime dt) =>
-      dt.year == _selectedDate.year &&
-      dt.month == _selectedDate.month &&
-      dt.day == _selectedDate.day;
-
-  // ─── Header ────────────────────────────────────────────────────────────────
+  // ─── Header ──────────────────────────────────────────────────────────────
 
   Widget _buildHeader() {
-    final label = _isToday
-        ? '今天  ${DateFormat('yyyy.MM.dd').format(_selectedDate)}'
-        : DateFormat('yyyy.MM.dd').format(_selectedDate);
-
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [kPrimary, kPrimaryLight],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
-      child: SafeArea(
-        bottom: false,
-        child: SizedBox(
-          height: 56,
-          child: Row(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
-                onPressed: _prevDay,
-              ),
-              Expanded(
-                child: GestureDetector(
-                  onTap: _pickDate,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        label,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 17,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.3,
-                        ),
+    final label = DateFormat('yyyy.MM.dd').format(_selectedDate);
+    return SafeArea(
+      bottom: false,
+      child: SizedBox(
+        height: 56,
+        child: Row(
+          children: [
+            IconButton(
+              icon: const Icon(Icons.arrow_back_ios_new,
+                  color: Colors.white, size: 20),
+              onPressed: _prevDay,
+            ),
+            Expanded(
+              child: GestureDetector(
+                onTap: _pickDate,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      label,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.5,
                       ),
-                      const SizedBox(width: 4),
-                      const Icon(Icons.keyboard_arrow_down, color: Colors.white70, size: 20),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(width: 4),
+                    const Icon(Icons.keyboard_arrow_down,
+                        color: Colors.white70, size: 22),
+                  ],
                 ),
               ),
-              IconButton(
-                icon: const Icon(Icons.calendar_month_outlined, color: Colors.white, size: 22),
-                onPressed: _pickDate,
-              ),
-              IconButton(
-                icon: const Icon(Icons.bar_chart_rounded, color: Colors.white, size: 22),
-                onPressed: () {},
-              ),
-            ],
-          ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.calendar_month_outlined,
+                  color: Colors.white, size: 22),
+              onPressed: _pickDate,
+            ),
+            IconButton(
+              icon: const Icon(Icons.bar_chart_rounded,
+                  color: Colors.white, size: 22),
+              onPressed: () {},
+            ),
+          ],
         ),
       ),
     );
   }
 
-  // ─── Summary row ───────────────────────────────────────────────────────────
+  // ─── Filter bar ──────────────────────────────────────────────────────────
 
-  Widget _buildSummary(int waterCount, int medCount) {
+  Widget _buildFilterBar(AppProvider provider) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
+      child: Row(
+        children: [
+          _filterDropdown(),
+          const Spacer(),
+          Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: const Color(0xFF07C160).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const Row(
+              children: [
+                Icon(Icons.people_outline,
+                    color: Color(0xFF07C160), size: 16),
+                SizedBox(width: 4),
+                Text('邀请好友',
+                    style: TextStyle(
+                        color: Color(0xFF07C160),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _filterDropdown() {
+    const options = <String, String>{
+      '全部': '全部',
+      'feeding': '母乳瓶喂',
+      'med': '用药',
+      'diaper': '换尿布',
+      'solidFood': '辅食',
+      'sleep': '睡眠',
+    };
+    final label = options[_filter] ?? '全部';
+
+    return GestureDetector(
+      onTap: () async {
+        final entry = await showMenu<String>(
+          context: context,
+          position: const RelativeRect.fromLTRB(16, 120, 0, 0),
+          items: options.entries
+              .map((e) => PopupMenuItem(
+                    value: e.key,
+                    child: Text(e.value),
+                  ))
+              .toList(),
+        );
+        if (entry != null) setState(() => _filter = entry);
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 4,
+              offset: const Offset(0, 1),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Text(label,
+                style: const TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFF333333),
+                    fontWeight: FontWeight.w500)),
+            const SizedBox(width: 4),
+            const Icon(Icons.keyboard_arrow_down,
+                size: 16, color: Color(0xFF888888)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ─── Summary bar ─────────────────────────────────────────────────────────
+
+  Widget _buildSummaryBar(AppProvider provider) {
+    final feedCount = provider.feedingEntries.where((e) => _sameDay(e.timestamp)).length;
+    final medCount = provider.medEntries.where((e) => _sameDay(e.timestamp)).length;
+    final diaperCount = provider.diaperEntries.where((e) => _sameDay(e.timestamp)).length;
+    final solidCount = provider.solidFoodEntries.where((e) => _sameDay(e.timestamp)).length;
+    final sleepCount = provider.sleepEntries.where((e) => _sameDay(e.startTime)).length;
+
     final parts = <String>[];
-    if (waterCount > 0) parts.add('喝水 $waterCount 次');
-    if (medCount > 0) parts.add('吃药 $medCount 次');
+    if (feedCount > 0) parts.add('喂奶 $feedCount次');
+    if (medCount > 0) parts.add('用药 $medCount次');
+    if (diaperCount > 0) parts.add('换尿布 $diaperCount次');
+    if (solidCount > 0) parts.add('辅食 $solidCount次');
+    if (sleepCount > 0) parts.add('睡眠 $sleepCount次');
+
     final text = parts.isEmpty ? '今日暂无记录' : '· ${parts.join(' · ')}';
 
     return Container(
       width: double.infinity,
-      color: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 10),
       child: Text(
         text,
         style: const TextStyle(fontSize: 13, color: Color(0xFF888888)),
@@ -188,78 +331,76 @@ class _HealthTrackerHomeState extends State<HealthTrackerHome> {
     );
   }
 
-  // ─── Empty state ───────────────────────────────────────────────────────────
+  // ─── Empty state ─────────────────────────────────────────────────────────
 
   Widget _buildEmpty() {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.note_alt_outlined, size: 72, color: Colors.grey.shade300),
+          Text('👶',
+              style: TextStyle(
+                  fontSize: 72, color: Colors.grey.shade300)),
           const SizedBox(height: 12),
-          const Text('还没有记录', style: TextStyle(color: Colors.grey, fontSize: 15)),
+          const Text('还没有记录',
+              style: TextStyle(color: Color(0xFF999999), fontSize: 16)),
           const SizedBox(height: 6),
-          const Text('点击下方按钮添加', style: TextStyle(color: Colors.grey, fontSize: 13)),
+          const Text('点击下方按钮添加',
+              style: TextStyle(color: Color(0xFFBBBBBB), fontSize: 13)),
         ],
       ),
     );
   }
 
-  // ─── Timeline ──────────────────────────────────────────────────────────────
+  // ─── Timeline ────────────────────────────────────────────────────────────
 
-  Widget _buildTimeline(List<_TimelineItem> items, HealthProvider provider) {
+  Widget _buildTimeline(List<_Entry> entries, AppProvider provider) {
     return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-      itemCount: items.length,
-      itemBuilder: (ctx, i) => _buildRow(items[i], provider, isLast: i == items.length - 1),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      itemCount: entries.length,
+      itemBuilder: (ctx, i) =>
+          _buildTimelineRow(entries[i], provider, i == entries.length - 1),
     );
   }
 
-  Widget _buildRow(_TimelineItem item, HealthProvider provider, {required bool isLast}) {
+  Widget _buildTimelineRow(
+      _Entry entry, AppProvider provider, bool isLast) {
     final now = DateTime.now();
-    final diff = now.difference(item.timestamp);
+    final diff = now.difference(entry.timestamp);
     final String ago;
     if (diff.inMinutes < 1) {
       ago = '刚刚';
     } else if (diff.inMinutes < 60) {
-      ago = '${diff.inMinutes} 分钟前';
+      ago = '${diff.inMinutes}分钟前';
     } else if (diff.inHours < 24) {
       final h = diff.inHours;
       final m = diff.inMinutes % 60;
-      ago = m > 0 ? '$h 小时 $m 分钟前' : '$h 小时前';
+      ago = m > 0 ? '$h小时\n$m分钟前' : '$h小时前';
     } else {
-      ago = DateFormat('MM-dd').format(item.timestamp);
+      ago = DateFormat('MM-dd').format(entry.timestamp);
     }
 
     return Dismissible(
-      key: Key(item.type == 'water'
-          ? (item.data as WaterEntry).id
-          : (item.data as MedicationEntry).id),
+      key: Key('${entry.type}_${entry.id}'),
       direction: DismissDirection.endToStart,
       background: Container(
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20, bottom: 12),
         child: const Icon(Icons.delete_outline, color: Colors.red, size: 26),
       ),
-      onDismissed: (_) {
-        if (item.type == 'water') {
-          provider.removeWaterEntry((item.data as WaterEntry).id);
-        } else {
-          provider.removeMedicationEntry((item.data as MedicationEntry).id);
-        }
-      },
+      onDismissed: (_) => provider.removeEntry(entry.type, entry.id),
       child: IntrinsicHeight(
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Time column
             SizedBox(
-              width: 68,
+              width: 66,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    DateFormat('HH:mm').format(item.timestamp),
+                    DateFormat('HH:mm').format(entry.timestamp),
                     style: const TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
@@ -268,7 +409,8 @@ class _HealthTrackerHomeState extends State<HealthTrackerHome> {
                   ),
                   Text(
                     ago,
-                    style: const TextStyle(fontSize: 10, color: Color(0xFFAAAAAA)),
+                    style: const TextStyle(
+                        fontSize: 10, color: Color(0xFFAAAAAA)),
                     textAlign: TextAlign.right,
                   ),
                 ],
@@ -285,12 +427,15 @@ class _HealthTrackerHomeState extends State<HealthTrackerHome> {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     shape: BoxShape.circle,
-                    border: Border.all(color: const Color(0xFFCCCCCC), width: 2),
+                    border: Border.all(
+                        color: const Color(0xFFCCCCCC), width: 2),
                   ),
                 ),
                 if (!isLast)
                   Expanded(
-                    child: Container(width: 1.5, color: const Color(0xFFE0E0E0)),
+                    child: Container(
+                        width: 1.5,
+                        color: const Color(0xFFE0E0E0)),
                   ),
               ],
             ),
@@ -299,7 +444,7 @@ class _HealthTrackerHomeState extends State<HealthTrackerHome> {
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.only(bottom: 12),
-                child: _buildCard(item),
+                child: _buildCard(entry),
               ),
             ),
           ],
@@ -308,108 +453,183 @@ class _HealthTrackerHomeState extends State<HealthTrackerHome> {
     );
   }
 
-  Widget _buildCard(_TimelineItem item) {
-    if (item.type == 'water') {
-      final e = item.data as WaterEntry;
-      return _EventCard(
-        iconData: Icons.water_drop_outlined,
-        iconColor: const Color(0xFF5B9BD5),
-        iconBg: const Color(0xFFE8F3FC),
-        title: '喝水',
-        trailing: '${e.amount} mL',
-      );
-    } else {
-      final e = item.data as MedicationEntry;
-      return _EventCard(
-        iconData: Icons.medication_outlined,
-        iconColor: const Color(0xFF7B68EE),
-        iconBg: const Color(0xFFF0EEFF),
-        title: e.name,
-        subtitle: e.dosage,
-        trailing: e.notes,
-      );
+  Widget _buildCard(_Entry entry) {
+    switch (entry.type) {
+      case 'feeding':
+        final e = entry.data as FeedingEntry;
+        return _TimelineCard(
+          emoji: '🍼',
+          emojiColor: const Color(0xFFE3F0FC),
+          title: '母乳瓶喂',
+          trailing: '${e.amountMl}mL',
+        );
+      case 'med':
+        final e = entry.data as MedEntry;
+        return _TimelineCard(
+          emoji: '💊',
+          emojiColor: const Color(0xFFF0EEFF),
+          title: '用药',
+          subtitle: e.medicines.isEmpty ? null : e.medicines.join('、'),
+        );
+      case 'diaper':
+        final e = entry.data as DiaperEntry;
+        final isDry = e.diaperType == 'wet';
+        return _TimelineCard(
+          emoji: isDry ? '💧' : '💩',
+          emojiColor: isDry
+              ? const Color(0xFFE3F0FC)
+              : const Color(0xFFFFF3E0),
+          title: e.typeLabel,
+        );
+      case 'solidFood':
+        final e = entry.data as SolidFoodEntry;
+        return _TimelineCard(
+          emoji: '🥣',
+          emojiColor: const Color(0xFFFFEEF0),
+          title: '辅食',
+          subtitle: e.texture,
+        );
+      case 'sleep':
+        final e = entry.data as SleepEntry;
+        return _TimelineCard(
+          emoji: '🌙',
+          emojiColor: const Color(0xFFFFF8E1),
+          title: '睡眠',
+          trailing: e.durationText,
+        );
+      default:
+        return const SizedBox.shrink();
     }
   }
 
-  // ─── Bottom bar ────────────────────────────────────────────────────────────
+  // ─── Bottom bar ──────────────────────────────────────────────────────────
 
-  Widget _buildBottomBar(HealthProvider provider) {
+  Widget _buildBottomBar(AppProvider provider) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.06),
-            blurRadius: 10,
+            blurRadius: 12,
             offset: const Offset(0, -2),
           ),
         ],
       ),
       child: SafeArea(
         top: false,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _BottomAction(
-                icon: Icons.water_drop_outlined,
-                label: '喝水',
-                color: const Color(0xFF5B9BD5),
-                onTap: () => _showWaterSheet(provider),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Drag handle
+            GestureDetector(
+              onTap: () => _showAllActionsSheet(provider),
+              onVerticalDragEnd: (d) {
+                if (d.primaryVelocity != null &&
+                    d.primaryVelocity! < -200) {
+                  _showAllActionsSheet(provider);
+                }
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFDDDDDD),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
               ),
-              _BottomAction(
-                icon: Icons.medication_outlined,
-                label: '吃药',
-                color: const Color(0xFF7B68EE),
-                onTap: () => _showMedicationSheet(provider),
+            ),
+            // 4 main actions
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 0, 8, 10),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _BottomActionBtn(
+                    emoji: '🍼',
+                    label: '母乳瓶喂',
+                    color: const Color(0xFF5B9BD5),
+                    onTap: () => _goto(const FeedingPage()),
+                  ),
+                  _BottomActionBtn(
+                    emoji: '💊',
+                    label: '用药',
+                    color: const Color(0xFF9B8FF9),
+                    onTap: () => _goto(const MedicationPage()),
+                  ),
+                  _BottomActionBtn(
+                    emoji: '👶',
+                    label: '换尿布',
+                    color: const Color(0xFF5B9BD5),
+                    onTap: () => _goto(const DiaperPage()),
+                  ),
+                  _BottomActionBtn(
+                    emoji: '🥣',
+                    label: '辅食',
+                    color: const Color(0xFFE57A8A),
+                    onTap: () => _goto(const SolidFoodPage()),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  // ─── Bottom sheets ─────────────────────────────────────────────────────────
-
-  void _showWaterSheet(HealthProvider provider) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => _WaterSheet(provider: provider),
-    );
+  void _goto(Widget page) {
+    Navigator.push(context,
+        MaterialPageRoute(builder: (_) => page));
   }
 
-  void _showMedicationSheet(HealthProvider provider) {
+  void _showAllActionsSheet(AppProvider provider) {
     showModalBottomSheet(
       context: context,
-      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (_) => _MedicationSheet(provider: provider),
+      builder: (_) => _AllActionsSheet(
+        onSelect: (type) {
+          Navigator.pop(context);
+          switch (type) {
+            case 'feeding':
+              _goto(const FeedingPage());
+              break;
+            case 'med':
+              _goto(const MedicationPage());
+              break;
+            case 'diaper':
+              _goto(const DiaperPage());
+              break;
+            case 'solidFood':
+              _goto(const SolidFoodPage());
+              break;
+            case 'sleep':
+              _goto(const SleepPage());
+              break;
+          }
+        },
+      ),
     );
   }
 }
 
-// ─── Event Card ──────────────────────────────────────────────────────────────
+// ─── Timeline card ───────────────────────────────────────────────────────────
 
-class _EventCard extends StatelessWidget {
-  final IconData iconData;
-  final Color iconColor;
-  final Color iconBg;
+class _TimelineCard extends StatelessWidget {
+  final String emoji;
+  final Color emojiColor;
   final String title;
   final String? subtitle;
   final String? trailing;
 
-  const _EventCard({
-    required this.iconData,
-    required this.iconColor,
-    required this.iconBg,
+  const _TimelineCard({
+    required this.emoji,
+    required this.emojiColor,
     required this.title,
     this.subtitle,
     this.trailing,
@@ -421,11 +641,11 @@ class _EventCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.04),
-            blurRadius: 4,
+            blurRadius: 6,
             offset: const Offset(0, 2),
           ),
         ],
@@ -433,13 +653,16 @@ class _EventCard extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            width: 40,
-            height: 40,
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
-              color: iconBg,
-              borderRadius: BorderRadius.circular(10),
+              color: emojiColor,
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(iconData, color: iconColor, size: 22),
+            child: Center(
+              child: Text(emoji,
+                  style: const TextStyle(fontSize: 24)),
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -455,21 +678,23 @@ class _EventCard extends StatelessWidget {
                     color: Color(0xFF222222),
                   ),
                 ),
-                if (subtitle != null)
+                if (subtitle != null && subtitle!.isNotEmpty)
                   Text(
                     subtitle!,
-                    style: const TextStyle(fontSize: 12, color: Color(0xFFAAAAAA)),
+                    style: const TextStyle(
+                        fontSize: 12, color: Color(0xFFAAAAAA)),
+                    overflow: TextOverflow.ellipsis,
                   ),
               ],
             ),
           ),
-          if (trailing != null)
-            Text(
-              trailing!,
-              style: const TextStyle(fontSize: 14, color: Color(0xFF999999)),
-            ),
+          if (trailing != null && trailing!.isNotEmpty)
+            Text(trailing!,
+                style: const TextStyle(
+                    fontSize: 14, color: Color(0xFF999999))),
           const SizedBox(width: 4),
-          const Icon(Icons.chevron_right, size: 18, color: Color(0xFFCCCCCC)),
+          const Icon(Icons.chevron_right,
+              size: 18, color: Color(0xFFCCCCCC)),
         ],
       ),
     );
@@ -478,14 +703,14 @@ class _EventCard extends StatelessWidget {
 
 // ─── Bottom action button ─────────────────────────────────────────────────────
 
-class _BottomAction extends StatelessWidget {
-  final IconData icon;
+class _BottomActionBtn extends StatelessWidget {
+  final String emoji;
   final String label;
   final Color color;
   final VoidCallback onTap;
 
-  const _BottomAction({
-    required this.icon,
+  const _BottomActionBtn({
+    required this.emoji,
     required this.label,
     required this.color,
     required this.onTap,
@@ -500,241 +725,169 @@ class _BottomAction extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 52,
-            height: 52,
+            width: 56,
+            height: 56,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(15),
+              color: color.withOpacity(0.10),
+              borderRadius: BorderRadius.circular(16),
             ),
-            child: Icon(icon, color: color, size: 26),
+            child: Center(
+              child: Text(emoji,
+                  style: const TextStyle(fontSize: 28)),
+            ),
           ),
-          const SizedBox(height: 4),
-          Text(label, style: TextStyle(fontSize: 12, color: color, fontWeight: FontWeight.w500)),
+          const SizedBox(height: 5),
+          Text(label,
+              style: TextStyle(
+                  fontSize: 12,
+                  color: color,
+                  fontWeight: FontWeight.w500)),
         ],
       ),
     );
   }
 }
 
-// ─── Water bottom sheet ───────────────────────────────────────────────────────
+// ─── All actions bottom sheet ─────────────────────────────────────────────────
 
-class _WaterSheet extends StatefulWidget {
-  final HealthProvider provider;
-  const _WaterSheet({required this.provider});
+class _AllActionsSheet extends StatelessWidget {
+  final void Function(String type) onSelect;
 
-  @override
-  State<_WaterSheet> createState() => _WaterSheetState();
-}
+  const _AllActionsSheet({required this.onSelect});
 
-class _WaterSheetState extends State<_WaterSheet> {
-  final _controller = TextEditingController(text: '250');
-  final _presets = [100, 200, 250, 300, 500];
+  static const _actions = [
+    _ActionItem('feeding', '🍼', '母乳瓶喂', Color(0xFFE3F0FC)),
+    _ActionItem('med', '💊', '用药', Color(0xFFF0EEFF)),
+    _ActionItem('diaper', '👶', '换尿布', Color(0xFFE3F0FC)),
+    _ActionItem('solidFood', '🥣', '辅食', Color(0xFFFFEEF0)),
+    _ActionItem('milestone', '🚩', '里程碑', Color(0xFFFFEFDF)),
+    _ActionItem('sleep', '🌙', '睡眠', Color(0xFFFFF8E1)),
+    _ActionItem('formula', '🍼', '奶粉喂养', Color(0xFFE8F8F0)),
+    _ActionItem('pump', '🤱', '泵奶', Color(0xFFFFEEF0)),
+    _ActionItem('temp', '🌡️', '体温', Color(0xFFE8F8F0)),
+    _ActionItem('breastfeed', '🤱', '母乳亲喂', Color(0xFFFFEEF0)),
+    _ActionItem('custom', '✏️', '自定义', Color(0xFFF5F5F5)),
+  ];
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
+  static const _navigableTypes = {
+    'feeding', 'med', 'diaper', 'solidFood', 'sleep'
+  };
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Handle
-            Center(
-              child: Container(
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFDDDDDD),
-                  borderRadius: BorderRadius.circular(2),
-                ),
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Handle
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: const Color(0xFFDDDDDD),
+                borderRadius: BorderRadius.circular(2),
               ),
             ),
-            const SizedBox(height: 16),
-            const Text(
-              '记录喝水',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: _presets.map((p) {
-                final selected = _controller.text == p.toString();
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+            child: GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate:
+                  const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 4,
+                mainAxisSpacing: 16,
+                crossAxisSpacing: 8,
+                childAspectRatio: 0.85,
+              ),
+              itemCount: _actions.length,
+              itemBuilder: (_, i) {
+                final a = _actions[i];
                 return GestureDetector(
-                  onTap: () => setState(() => _controller.text = p.toString()),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: selected
-                          ? const Color(0xFF5B9BD5).withOpacity(0.15)
-                          : const Color(0xFFF5F5F5),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: selected ? const Color(0xFF5B9BD5) : Colors.transparent,
+                  onTap: () {
+                    if (_navigableTypes.contains(a.type)) {
+                      onSelect(a.type);
+                    } else {
+                      Navigator.pop(context);
+                    }
+                  },
+                  child: Column(
+                    children: [
+                      Container(
+                        width: 60,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          color: a.bgColor,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Center(
+                          child: Text(a.emoji,
+                              style: const TextStyle(fontSize: 28)),
+                        ),
                       ),
-                    ),
-                    child: Text(
-                      '$p mL',
-                      style: TextStyle(
-                        color: selected ? const Color(0xFF5B9BD5) : const Color(0xFF555555),
-                        fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
-                      ),
-                    ),
+                      const SizedBox(height: 6),
+                      Text(a.label,
+                          style: const TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF444444)),
+                          textAlign: TextAlign.center),
+                    ],
                   ),
                 );
-              }).toList(),
+              },
             ),
-            const SizedBox(height: 14),
-            TextField(
-              controller: _controller,
-              keyboardType: TextInputType.number,
-              onChanged: (_) => setState(() {}),
-              decoration: InputDecoration(
-                labelText: '自定义水量 (mL)',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              ),
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF5B9BD5),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  elevation: 0,
+          ),
+          // Bottom buttons
+          Container(
+            decoration: const BoxDecoration(
+                border: Border(
+                    top: BorderSide(color: Color(0xFFEEEEEE)))),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextButton.icon(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.swap_vert,
+                        size: 16, color: Color(0xFF666666)),
+                    label: const Text('自定义排序',
+                        style: TextStyle(
+                            color: Color(0xFF666666), fontSize: 14)),
+                  ),
                 ),
-                onPressed: () {
-                  final amount = int.tryParse(_controller.text);
-                  if (amount != null && amount > 0) {
-                    widget.provider.addWaterEntry(amount);
-                    Navigator.pop(context);
-                  }
-                },
-                child: const Text('确认记录', style: TextStyle(fontSize: 16)),
-              ),
+                Container(
+                    width: 0.5, height: 36, color: const Color(0xFFEEEEEE)),
+                Expanded(
+                  child: TextButton.icon(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.add,
+                        size: 16, color: Color(0xFF666666)),
+                    label: const Text('添加到首页',
+                        style: TextStyle(
+                            color: Color(0xFF666666), fontSize: 14)),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+          SizedBox(height: MediaQuery.of(context).padding.bottom),
+        ],
       ),
     );
   }
 }
 
-// ─── Medication bottom sheet ──────────────────────────────────────────────────
+class _ActionItem {
+  final String type;
+  final String emoji;
+  final String label;
+  final Color bgColor;
 
-class _MedicationSheet extends StatefulWidget {
-  final HealthProvider provider;
-  const _MedicationSheet({required this.provider});
-
-  @override
-  State<_MedicationSheet> createState() => _MedicationSheetState();
-}
-
-class _MedicationSheetState extends State<_MedicationSheet> {
-  final _name = TextEditingController();
-  final _dosage = TextEditingController();
-  final _notes = TextEditingController();
-
-  @override
-  void dispose() {
-    _name.dispose();
-    _dosage.dispose();
-    _notes.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFDDDDDD),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              '记录吃药',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _name,
-              decoration: InputDecoration(
-                labelText: '药物名称',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _dosage,
-              decoration: InputDecoration(
-                labelText: '剂量（如：1片、10mL）',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _notes,
-              decoration: InputDecoration(
-                labelText: '备注（可选）',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              ),
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF7B68EE),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  elevation: 0,
-                ),
-                onPressed: () {
-                  final name = _name.text.trim();
-                  final dosage = _dosage.text.trim();
-                  if (name.isNotEmpty && dosage.isNotEmpty) {
-                    widget.provider.addMedicationEntry(
-                      name,
-                      dosage,
-                      notes: _notes.text.trim().isNotEmpty ? _notes.text.trim() : null,
-                    );
-                    Navigator.pop(context);
-                  }
-                },
-                child: const Text('确认记录', style: TextStyle(fontSize: 16)),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  const _ActionItem(this.type, this.emoji, this.label, this.bgColor);
 }
