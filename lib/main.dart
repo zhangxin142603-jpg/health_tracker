@@ -8,6 +8,8 @@ import 'screens/medication_page.dart';
 import 'screens/diaper_page.dart';
 import 'screens/solid_food_page.dart';
 import 'screens/sleep_page.dart';
+import 'l10n/strings.dart';
+import 'l10n/app_localizations.dart';
 
 void main() {
   runApp(const BabyTrackerApp());
@@ -24,7 +26,7 @@ class BabyTrackerApp extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (_) => AppProvider(),
       child: MaterialApp(
-        title: '宝宝记录',
+        title: AppStrings.appTitle,
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: kPrimary),
           useMaterial3: true,
@@ -64,7 +66,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   DateTime _selectedDate = DateTime.now();
-  String _filter = '全部'; // '全部' | 'feeding' | 'med' | 'diaper' | 'solidFood' | 'sleep'
+  String _filter = AppStrings.all; // '全部' | 'feeding' | 'med' | 'diaper' | 'solidFood' | 'sleep'
 
   bool get _isToday {
     final now = DateTime.now();
@@ -102,7 +104,7 @@ class _HomePageState extends State<HomePage> {
               timestamp: e.startTime, type: 'sleep', id: e.id, data: e)),
     ]..sort((a, b) => a.timestamp.compareTo(b.timestamp));
 
-    if (_filter == '全部') return all;
+    if (_filter == AppStrings.all) return all;
     return all.where((e) => e.type == _filter).toList();
   }
 
@@ -146,17 +148,17 @@ class _HomePageState extends State<HomePage> {
               child: Column(
                 children: [
                   _buildFilterBar(provider),
-                  _buildSummaryBar(provider),
+                  _buildSummaryBar(context, provider),
                   Expanded(
                     child: entries.isEmpty
                         ? _buildEmpty()
-                        : _buildTimeline(entries, provider),
+                        : _buildTimeline(context, entries, provider),
                   ),
                 ],
               ),
             ),
           ),
-          _buildBottomBar(provider),
+          _buildBottomBar(context, provider),
         ],
       ),
     );
@@ -236,7 +238,7 @@ class _HomePageState extends State<HomePage> {
                 Icon(Icons.people_outline,
                     color: Color(0xFF07C160), size: 16),
                 SizedBox(width: 4),
-                Text('邀请好友',
+                Text(AppStrings.inviteFriends,
                     style: TextStyle(
                         color: Color(0xFF07C160),
                         fontSize: 13,
@@ -251,14 +253,14 @@ class _HomePageState extends State<HomePage> {
 
   Widget _filterDropdown() {
     const options = <String, String>{
-      '全部': '全部',
-      'feeding': '母乳瓶喂',
-      'med': '用药',
-      'diaper': '换尿布',
-      'solidFood': '辅食',
-      'sleep': '睡眠',
+      '全部': AppStrings.all,
+      'feeding': AppStrings.feeding,
+      'med': AppStrings.medication,
+      'diaper': AppStrings.diaper,
+      'solidFood': AppStrings.solidFood,
+      'sleep': AppStrings.sleep,
     };
-    final label = options[_filter] ?? '全部';
+    final label = options[_filter] ?? AppStrings.all;
 
     return GestureDetector(
       onTap: () async {
@@ -305,7 +307,7 @@ class _HomePageState extends State<HomePage> {
 
   // ─── Summary bar ─────────────────────────────────────────────────────────
 
-  Widget _buildSummaryBar(AppProvider provider) {
+  Widget _buildSummaryBar(BuildContext context, AppProvider provider) {
     final feedCount = provider.feedingEntries.where((e) => _sameDay(e.timestamp)).length;
     final medCount = provider.medEntries.where((e) => _sameDay(e.timestamp)).length;
     final diaperCount = provider.diaperEntries.where((e) => _sameDay(e.timestamp)).length;
@@ -313,13 +315,13 @@ class _HomePageState extends State<HomePage> {
     final sleepCount = provider.sleepEntries.where((e) => _sameDay(e.startTime)).length;
 
     final parts = <String>[];
-    if (feedCount > 0) parts.add('喂奶 $feedCount次');
-    if (medCount > 0) parts.add('用药 $medCount次');
-    if (diaperCount > 0) parts.add('换尿布 $diaperCount次');
-    if (solidCount > 0) parts.add('辅食 $solidCount次');
-    if (sleepCount > 0) parts.add('睡眠 $sleepCount次');
+    if (feedCount > 0) parts.add(AppLocalizations.of(context).feedingCount(feedCount));
+    if (medCount > 0) parts.add(AppLocalizations.of(context).medicationCount(medCount));
+    if (diaperCount > 0) parts.add(AppLocalizations.of(context).diaperCount(diaperCount));
+    if (solidCount > 0) parts.add(AppLocalizations.of(context).solidFoodCount(solidCount));
+    if (sleepCount > 0) parts.add(AppLocalizations.of(context).sleepCount(sleepCount));
 
-    final text = parts.isEmpty ? '今日暂无记录' : '· ${parts.join(' · ')}';
+    final text = parts.isEmpty ? AppStrings.todayNoRecords : '· ${parts.join(' · ')}';
 
     return Container(
       width: double.infinity,
@@ -342,10 +344,10 @@ class _HomePageState extends State<HomePage> {
               style: TextStyle(
                   fontSize: 72, color: Colors.grey.shade300)),
           const SizedBox(height: 12),
-          const Text('还没有记录',
+          const Text(AppStrings.noRecords,
               style: TextStyle(color: Color(0xFF999999), fontSize: 16)),
           const SizedBox(height: 6),
-          const Text('点击下方按钮添加',
+          const Text(AppStrings.clickToAdd,
               style: TextStyle(color: Color(0xFFBBBBBB), fontSize: 13)),
         ],
       ),
@@ -354,28 +356,28 @@ class _HomePageState extends State<HomePage> {
 
   // ─── Timeline ────────────────────────────────────────────────────────────
 
-  Widget _buildTimeline(List<_Entry> entries, AppProvider provider) {
+  Widget _buildTimeline(BuildContext context, List<_Entry> entries, AppProvider provider) {
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       itemCount: entries.length,
       itemBuilder: (ctx, i) =>
-          _buildTimelineRow(entries[i], provider, i == entries.length - 1),
+          _buildTimelineRow(ctx, entries[i], provider, i == entries.length - 1),
     );
   }
 
   Widget _buildTimelineRow(
-      _Entry entry, AppProvider provider, bool isLast) {
+      BuildContext context, _Entry entry, AppProvider provider, bool isLast) {
     final now = DateTime.now();
     final diff = now.difference(entry.timestamp);
     final String ago;
     if (diff.inMinutes < 1) {
-      ago = '刚刚';
+      ago = AppLocalizations.of(context).justNow;
     } else if (diff.inMinutes < 60) {
-      ago = '${diff.inMinutes}分钟前';
+      ago = AppLocalizations.of(context).minutesAgo(diff.inMinutes);
     } else if (diff.inHours < 24) {
       final h = diff.inHours;
       final m = diff.inMinutes % 60;
-      ago = m > 0 ? '$h小时\n$m分钟前' : '$h小时前';
+      ago = m > 0 ? AppLocalizations.of(context).hoursMinutesAgo(h, m) : AppLocalizations.of(context).hoursAgo(h);
     } else {
       ago = DateFormat('MM-dd').format(entry.timestamp);
     }
@@ -444,7 +446,7 @@ class _HomePageState extends State<HomePage> {
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.only(bottom: 12),
-                child: _buildCard(entry),
+                child: _buildCard(context, entry),
               ),
             ),
           ],
@@ -453,14 +455,14 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildCard(_Entry entry) {
+  Widget _buildCard(BuildContext context, _Entry entry) {
     switch (entry.type) {
       case 'feeding':
         final e = entry.data as FeedingEntry;
         return _TimelineCard(
           emoji: '🍼',
           emojiColor: const Color(0xFFE3F0FC),
-          title: '母乳瓶喂',
+          title: AppLocalizations.of(context).feeding,
           trailing: '${e.amountMl}mL',
         );
       case 'med':
@@ -468,7 +470,7 @@ class _HomePageState extends State<HomePage> {
         return _TimelineCard(
           emoji: '💊',
           emojiColor: const Color(0xFFF0EEFF),
-          title: '用药',
+          title: AppLocalizations.of(context).medication,
           subtitle: e.medicines.isEmpty ? null : e.medicines.join('、'),
         );
       case 'diaper':
@@ -486,7 +488,7 @@ class _HomePageState extends State<HomePage> {
         return _TimelineCard(
           emoji: '🥣',
           emojiColor: const Color(0xFFFFEEF0),
-          title: '辅食',
+          title: AppLocalizations.of(context).solidFood,
           subtitle: e.texture,
         );
       case 'sleep':
@@ -494,7 +496,7 @@ class _HomePageState extends State<HomePage> {
         return _TimelineCard(
           emoji: '🌙',
           emojiColor: const Color(0xFFFFF8E1),
-          title: '睡眠',
+          title: AppLocalizations.of(context).sleep,
           trailing: e.durationText,
         );
       default:
@@ -504,7 +506,7 @@ class _HomePageState extends State<HomePage> {
 
   // ─── Bottom bar ──────────────────────────────────────────────────────────
 
-  Widget _buildBottomBar(AppProvider provider) {
+  Widget _buildBottomBar(BuildContext context, AppProvider provider) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -550,25 +552,25 @@ class _HomePageState extends State<HomePage> {
                 children: [
                   _BottomActionBtn(
                     emoji: '🍼',
-                    label: '母乳瓶喂',
+                    label: AppLocalizations.of(context).feeding,
                     color: const Color(0xFF5B9BD5),
                     onTap: () => _goto(const FeedingPage()),
                   ),
                   _BottomActionBtn(
                     emoji: '💊',
-                    label: '用药',
+                    label: AppLocalizations.of(context).medication,
                     color: const Color(0xFF9B8FF9),
                     onTap: () => _goto(const MedicationPage()),
                   ),
                   _BottomActionBtn(
                     emoji: '👶',
-                    label: '换尿布',
+                    label: AppLocalizations.of(context).diaper,
                     color: const Color(0xFF5B9BD5),
                     onTap: () => _goto(const DiaperPage()),
                   ),
                   _BottomActionBtn(
                     emoji: '🥣',
-                    label: '辅食',
+                    label: AppLocalizations.of(context).solidFood,
                     color: const Color(0xFFE57A8A),
                     onTap: () => _goto(const SolidFoodPage()),
                   ),
@@ -756,17 +758,17 @@ class _AllActionsSheet extends StatelessWidget {
   const _AllActionsSheet({required this.onSelect});
 
   static const _actions = [
-    _ActionItem('feeding', '🍼', '母乳瓶喂', Color(0xFFE3F0FC)),
-    _ActionItem('med', '💊', '用药', Color(0xFFF0EEFF)),
-    _ActionItem('diaper', '👶', '换尿布', Color(0xFFE3F0FC)),
-    _ActionItem('solidFood', '🥣', '辅食', Color(0xFFFFEEF0)),
-    _ActionItem('milestone', '🚩', '里程碑', Color(0xFFFFEFDF)),
-    _ActionItem('sleep', '🌙', '睡眠', Color(0xFFFFF8E1)),
-    _ActionItem('formula', '🍼', '奶粉喂养', Color(0xFFE8F8F0)),
-    _ActionItem('pump', '🤱', '泵奶', Color(0xFFFFEEF0)),
-    _ActionItem('temp', '🌡️', '体温', Color(0xFFE8F8F0)),
-    _ActionItem('breastfeed', '🤱', '母乳亲喂', Color(0xFFFFEEF0)),
-    _ActionItem('custom', '✏️', '自定义', Color(0xFFF5F5F5)),
+    _ActionItem('feeding', '🍼', AppStrings.feeding, Color(0xFFE3F0FC)),
+    _ActionItem('med', '💊', AppStrings.medication, Color(0xFFF0EEFF)),
+    _ActionItem('diaper', '👶', AppStrings.diaper, Color(0xFFE3F0FC)),
+    _ActionItem('solidFood', '🥣', AppStrings.solidFood, Color(0xFFFFEEF0)),
+    _ActionItem('milestone', '🚩', AppStrings.milestone, Color(0xFFFFEFDF)),
+    _ActionItem('sleep', '🌙', AppStrings.sleep, Color(0xFFFFF8E1)),
+    _ActionItem('formula', '🍼', AppStrings.formula, Color(0xFFE8F8F0)),
+    _ActionItem('pump', '🤱', AppStrings.pump, Color(0xFFFFEEF0)),
+    _ActionItem('temp', '🌡️', AppStrings.temperature, Color(0xFFE8F8F0)),
+    _ActionItem('breastfeed', '🤱', AppStrings.breastfeed, Color(0xFFFFEEF0)),
+    _ActionItem('custom', '✏️', AppStrings.custom, Color(0xFFF5F5F5)),
   ];
 
   static const _navigableTypes = {
@@ -856,7 +858,7 @@ class _AllActionsSheet extends StatelessWidget {
                     onPressed: () => Navigator.pop(context),
                     icon: const Icon(Icons.swap_vert,
                         size: 16, color: Color(0xFF666666)),
-                    label: const Text('自定义排序',
+                    label: const Text(AppStrings.customSort,
                         style: TextStyle(
                             color: Color(0xFF666666), fontSize: 14)),
                   ),
@@ -868,7 +870,7 @@ class _AllActionsSheet extends StatelessWidget {
                     onPressed: () => Navigator.pop(context),
                     icon: const Icon(Icons.add,
                         size: 16, color: Color(0xFF666666)),
-                    label: const Text('添加到首页',
+                    label: const Text(AppStrings.addToHome,
                         style: TextStyle(
                             color: Color(0xFF666666), fontSize: 14)),
                   ),

@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../models/baby_entries.dart';
 import '../providers/app_provider.dart';
+import '../l10n/strings.dart';
 
 const Color _kPurple = Color(0xFF7B6CF6);
 
@@ -54,7 +55,7 @@ class _FeedingPageState extends State<FeedingPage> {
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
-        title: const Text('母乳瓶喂记录',
+        title: const Text(AppStrings.feedingRecord,
             style: TextStyle(
                 fontSize: 17,
                 fontWeight: FontWeight.w600,
@@ -79,7 +80,7 @@ class _FeedingPageState extends State<FeedingPage> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: Row(
           children: [
-            const Text('开始时间',
+            const Text(AppStrings.startTime,
                 style: TextStyle(fontSize: 16, color: Colors.black)),
             const Spacer(),
             _pillBtn(_dateLabel(), isTime: false, onTap: _pickDate),
@@ -94,7 +95,7 @@ class _FeedingPageState extends State<FeedingPage> {
     final now = DateTime.now();
     if (_time.year == now.year &&
         _time.month == now.month &&
-        _time.day == now.day) return '今天';
+        _time.day == now.day) return AppStrings.today;
     return DateFormat('MM-dd').format(_time);
   }
 
@@ -125,7 +126,7 @@ class _FeedingPageState extends State<FeedingPage> {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           child: Row(
             children: [
-              const Text('奶量',
+              const Text(AppStrings.milkAmount,
                   style: TextStyle(fontSize: 16, color: Colors.black)),
               const Spacer(),
               Text('$_amount mL',
@@ -145,7 +146,7 @@ class _FeedingPageState extends State<FeedingPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('备注',
+            const Text(AppStrings.notes,
                 style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
@@ -157,7 +158,7 @@ class _FeedingPageState extends State<FeedingPage> {
               maxLength: 200,
               style: const TextStyle(fontSize: 14),
               decoration: const InputDecoration(
-                hintText: '选填，比如宝宝是否有吐奶、肠胀气等不适情况',
+                hintText: AppStrings.feedingNotesHint,
                 hintStyle:
                     TextStyle(color: Color(0xFFBBBBBB), fontSize: 14),
                 border: InputBorder.none,
@@ -184,7 +185,7 @@ class _FeedingPageState extends State<FeedingPage> {
               elevation: 0,
             ),
             onPressed: _save,
-            child: const Text('保存',
+            child: const Text(AppStrings.save,
                 style:
                     TextStyle(fontSize: 17, fontWeight: FontWeight.w500)),
           ),
@@ -254,7 +255,7 @@ class _AmountDialogState extends State<_AmountDialog> {
   Widget build(BuildContext context) {
     final cur = int.tryParse(_ctrl.text) ?? widget.initial;
     return AlertDialog(
-      title: const Text('选择奶量'),
+      title: const Text(AppStrings.milkAmountSelector),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       content: Column(
         mainAxisSize: MainAxisSize.min,
@@ -294,7 +295,7 @@ class _AmountDialogState extends State<_AmountDialog> {
             keyboardType: TextInputType.number,
             onChanged: (_) => setState(() {}),
             decoration: InputDecoration(
-              labelText: '自定义 (mL)',
+              labelText: AppStrings.customMl,
               border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10)),
               contentPadding: const EdgeInsets.symmetric(
@@ -306,7 +307,7 @@ class _AmountDialogState extends State<_AmountDialog> {
       actions: [
         TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('取消')),
+            child: const Text(AppStrings.cancel)),
         ElevatedButton(
           style: ElevatedButton.styleFrom(
               backgroundColor: _kPurple, foregroundColor: Colors.white),
@@ -314,7 +315,7 @@ class _AmountDialogState extends State<_AmountDialog> {
             final v = int.tryParse(_ctrl.text);
             if (v != null && v > 0) Navigator.pop(context, v);
           },
-          child: const Text('确定'),
+          child: const Text(AppStrings.confirm),
         ),
       ],
     );
