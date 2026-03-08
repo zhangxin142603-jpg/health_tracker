@@ -229,7 +229,7 @@ class _HomePageState extends State<HomePage> {
 
     // Build summary parts
     final parts = <String>[];
-    if (feedCount.isNotEmpty) parts.add('喂奶 ${feedCount.length}次');
+    if (feedCount.isNotEmpty) parts.add('投喂 ${feedCount.length}次');
     if (diaperList.isNotEmpty) parts.add('解便 ${diaperList.length}次');
     if (sleepList.isNotEmpty) parts.add('睡眠 ${sleepList.length}次');
     for (final t in ['锻炼', '觉察', '疗愈', '真我']) {

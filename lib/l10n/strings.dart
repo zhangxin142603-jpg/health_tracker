@@ -72,9 +72,9 @@ class AppStrings {
   static const String diaper = '解便';
   static const String diaperRecord = '解便记录';
   static const String diaperCount = '解便 {count}次';
-  static const String poop = '大便';
-  static const String pee = '小便';
-  static const String poopPee = '大便+小便';
+  static const String poop = '解大';
+  static const String pee = '解小';
+  static const String poopPee = '解大+解小';
   static const String diaperStatus = '解便类型';
   static const String diaperPageTitle = '解便';
   static const String diaperStatusLabel = '解便类型';

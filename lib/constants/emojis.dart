@@ -1,11 +1,11 @@
 // 功能按钮Emoji常量
 class AppEmojis {
   // 主要功能Emoji
-  static const String feeding = '🥛';      // 投喂 - 原🍼
+  static const String feeding = '🍲';      // 投喂 - 原🍼
   static const String diaper = '🚽';       // 解便 - 原👶
   static const String sleep = '😴';        // 睡眠 - 原🌙
   static const String exercise = '🏃';     // 锻炼 - 原🚩
-  static const String awareness = '🧠';    // 觉察 - 原🌡️
+  static const String awareness = '🩺';    // 觉察 - 原🌡️
   static const String healing = '❤️';      // 疗愈 - 原💊
   static const String self = '🌞';         // 真我 - 原🤱
   static const String custom = '📝';       // 自定义 - 原✏️

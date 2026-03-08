@@ -75,11 +75,11 @@ class DiaperEntry {
   String get typeLabel {
     switch (diaperType) {
       case 'poop':
-        return '大便';
+        return '解大';
       case 'both':
-        return '大便+小便';
+        return '解大+解小';
       default:
-        return '小便';
+        return '解小';
     }
   }
 
