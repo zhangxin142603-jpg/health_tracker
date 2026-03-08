@@ -9,6 +9,7 @@ import 'screens/sleep_page.dart';
 import 'screens/generic_record_page.dart';
 import 'screens/custom_page.dart';
 import 'l10n/app_localizations.dart';
+import 'constants/emojis.dart';
 
 void main() {
   runApp(const BabyTrackerApp());
@@ -419,7 +420,7 @@ class _HomePageState extends State<HomePage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text('👶',
+          Text(AppEmojis.emptyState,
               style: TextStyle(fontSize: 72, color: Colors.grey.shade300)),
           const SizedBox(height: 12),
           Text(AppLocalizations.of(context).noRecords,
@@ -538,7 +539,7 @@ class _HomePageState extends State<HomePage> {
       case 'feeding':
         final e = entry.data as FeedingEntry;
         return _TimelineCard(
-          emoji: '🍼',
+          emoji: AppEmojis.feeding,
           emojiColor: const Color(0xFFE3F0FC),
           title: '投喂',
           trailing: '${e.amountMl}mL',
@@ -547,10 +548,10 @@ class _HomePageState extends State<HomePage> {
       case 'diaper':
         final e = entry.data as DiaperEntry;
         final emoji = e.diaperType == 'wet'
-            ? '💧'
+            ? AppEmojis.pee
             : e.diaperType == 'poop'
-                ? '💩'
-                : '💧💩';
+                ? AppEmojis.poop
+                : AppEmojis.both;
         return _TimelineCard(
           emoji: emoji,
           emojiColor: e.diaperType == 'wet'
@@ -565,7 +566,7 @@ class _HomePageState extends State<HomePage> {
             ? '(${DateFormat('HH:mm').format(e.endTime!)} 结束）'
             : '';
         return _TimelineCard(
-          emoji: '🌙',
+          emoji: AppEmojis.sleep,
           emojiColor: const Color(0xFFFFF8E1),
           title: '睡眠$endLabel',
           trailing: e.durationText,
@@ -574,13 +575,13 @@ class _HomePageState extends State<HomePage> {
       case 'generic':
         final e = entry.data as GenericEntry;
         final icons = {
-          '锻炼': ('🚩', const Color(0xFFFFEFDF)),
-          '觉察': ('🌡️', const Color(0xFFE8F8F0)),
-          '疗愈': ('💊', const Color(0xFFF0EEFF)),
-          '真我': ('🤱', const Color(0xFFFFEEF0)),
-          '睡眠': ('🌙', const Color(0xFFFFF8E1)),
+          '锻炼': (AppEmojis.exercise, const Color(0xFFFFEFDF)),
+          '觉察': (AppEmojis.awareness, const Color(0xFFE8F8F0)),
+          '疗愈': (AppEmojis.healing, const Color(0xFFF0EEFF)),
+          '真我': (AppEmojis.self, const Color(0xFFFFEEF0)),
+          '睡眠': (AppEmojis.sleep, const Color(0xFFFFF8E1)),
         };
-        final icon = icons[e.type] ?? ('📝', const Color(0xFFF5F5F5));
+        final icon = icons[e.type] ?? (AppEmojis.custom, const Color(0xFFF5F5F5));
         return _TimelineCard(
           emoji: icon.$1,
           emojiColor: icon.$2,
@@ -591,7 +592,7 @@ class _HomePageState extends State<HomePage> {
       case 'custom':
         final e = entry.data as CustomEntry;
         return _TimelineCard(
-          emoji: '✏️',
+          emoji: AppEmojis.custom,
           emojiColor: const Color(0xFFFFF5E0),
           title: e.eventName.isNotEmpty ? e.eventName : '自定义',
           subtitle: e.notes,
@@ -627,13 +628,13 @@ class _HomePageState extends State<HomePage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _BottomBtn('🍼', '投喂', const Color(0xFF5B9BD5),
+                  _BottomBtn(AppEmojis.feeding, '投喂', const Color(0xFF5B9BD5),
                       () => _goto(const FeedingPage())),
-                  _BottomBtn('👶', '解便', const Color(0xFF5B9BD5),
+                  _BottomBtn(AppEmojis.diaper, '解便', const Color(0xFF5B9BD5),
                       () => _goto(const DiaperPage())),
-                  _BottomBtn('🌙', '睡眠', const Color(0xFFE8A020),
+                  _BottomBtn(AppEmojis.sleep, '睡眠', const Color(0xFFE8A020),
                       () => _goto(const SleepPage())),
-                  _BottomBtn('🚩', '锻炼', const Color(0xFF9B8FF9),
+                  _BottomBtn(AppEmojis.exercise, '锻炼', const Color(0xFF9B8FF9),
                       () => _goto(const GenericRecordPage(type: '锻炼'))),
                 ],
               ),
@@ -642,13 +643,13 @@ class _HomePageState extends State<HomePage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _BottomBtn('🌡️', '觉察', const Color(0xFF3DB070),
+                  _BottomBtn(AppEmojis.awareness, '觉察', const Color(0xFF3DB070),
                       () => _goto(const GenericRecordPage(type: '觉察'))),
-                  _BottomBtn('💊', '疗愈', const Color(0xFF7B9BD5),
+                  _BottomBtn(AppEmojis.healing, '疗愈', const Color(0xFF7B9BD5),
                       () => _goto(const GenericRecordPage(type: '疗愈'))),
-                  _BottomBtn('🤱', '真我', const Color(0xFF3DB070),
+                  _BottomBtn(AppEmojis.self, '真我', const Color(0xFF3DB070),
                       () => _goto(const GenericRecordPage(type: '真我'))),
-                  _BottomBtn('✏️', '自定义', const Color(0xFFE8A020),
+                  _BottomBtn(AppEmojis.custom, '自定义', const Color(0xFFE8A020),
                       () => _goto(const CustomPage())),
                 ],
               ),

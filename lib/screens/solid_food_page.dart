@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../models/baby_entries.dart';
 import '../providers/app_provider.dart';
+import '../constants/emojis.dart';
 
 const Color _kPurple = Color(0xFF7B6CF6);
 
@@ -27,12 +28,12 @@ class _SolidFoodPageState extends State<SolidFoodPage> {
   ];
 
   static const _textureOptions = [
-    _TextureOption('液体', '🥄', Color(0xFFFFF8E7)),
-    _TextureOption('泥糊状', '🥄', Color(0xFFFFEFD0)),
-    _TextureOption('碎末状', '🥄', Color(0xFFEFE8D8)),
-    _TextureOption('颗粒状', '🥄', Color(0xFFE8D8C0)),
-    _TextureOption('小块状', '🥄', Color(0xFFDDC8A8)),
-    _TextureOption('大块状', '🥄', Color(0xFFD0B890)),
+    _TextureOption('液体', AppEmojis.spoon, Color(0xFFFFF8E7)),
+    _TextureOption('泥糊状', AppEmojis.spoon, Color(0xFFFFEFD0)),
+    _TextureOption('碎末状', AppEmojis.spoon, Color(0xFFEFE8D8)),
+    _TextureOption('颗粒状', AppEmojis.spoon, Color(0xFFE8D8C0)),
+    _TextureOption('小块状', AppEmojis.spoon, Color(0xFFDDC8A8)),
+    _TextureOption('大块状', AppEmojis.spoon, Color(0xFFD0B890)),
   ];
 
   @override

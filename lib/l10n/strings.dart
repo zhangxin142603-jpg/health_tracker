@@ -78,7 +78,7 @@ class AppStrings {
   static const String diaperStatus = '解便类型';
   static const String diaperPageTitle = '解便';
   static const String diaperStatusLabel = '解便类型';
-  static const String notesHint = '选填，可随时随地记录宝宝的点滴日常...';
+  static const String notesHint = '选填';
   static const String saveButton = '保存';
   static const String deleteRecordButton = '删除这条记录';
   static const String urineColor = '尿液颜色';
@@ -101,7 +101,7 @@ class AppStrings {
   static const String startTime = '开始时间';
   static const String endTime = '结束时间';
   static const String sleepPageTitle = '睡眠';
-  static const String sleepNotesHint = '选填，比如宝宝睡觉时出现的小问题、睡眠环境等';
+  static const String sleepNotesHint = '选填等';
 
   // ==================== 辅食模块 ====================
   static const String solidFood = '辅食';
@@ -127,7 +127,7 @@ class AppStrings {
   static const String granular = '颗粒';
   static const String smallPieces = '小块';
   static const String largePieces = '大块';
-  static const String solidFoodNotesHint = '选填，记录宝宝辅食的详细信息';
+  static const String solidFoodNotesHint = '选填';
 
   // ==================== 其他功能 ====================
   static const String milestone = '锻炼';
@@ -154,12 +154,12 @@ class AppStrings {
   static const String deleteRecord = '删除这条记录';
 
   // ==================== 备注提示文本 ====================
-  static const String feedingNotesHint = '选填，可随时随地记录宝宝的点滴日常，比如：给宝宝喂水、拍嗝、洗澡、抚触按摩、做早教游戏等';
-  static const String diaperNotesHint = '选填，可随时随地记录宝宝的点滴日常，比如：给宝宝喂水、拍嗝、洗澡、抚触按摩、做早教游戏等';
+  static const String feedingNotesHint = '选填';
+  static const String diaperNotesHint = '选填';
   static const String medicationNotesHint = '选填';
   static const String generalNotesHint = '选填';
   static const String optionalNotesHint = '选填';
-  static const String genericNotesHint = '选填，';
+  static const String genericNotesHint = '选填';
 
   // ==================== 格式化方法 ====================
   /// 格式化带计数的字符串

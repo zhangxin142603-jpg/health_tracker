@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../models/baby_entries.dart';
 import '../providers/app_provider.dart';
 import '../l10n/app_localizations.dart';
+import '../constants/emojis.dart';
 
 const Color _kPurple = Color(0xFF7B6CF6);
 
@@ -178,11 +179,11 @@ class _DiaperPageState extends State<DiaperPage> {
             const SizedBox(height: 16),
             Row(
               children: [
-                _diaperOption('wet', '💧', AppLocalizations.of(context).pee),
+                _diaperOption('wet', AppEmojis.pee, AppLocalizations.of(context).pee),
                 const SizedBox(width: 24),
-                _diaperOption('poop', '💩', AppLocalizations.of(context).poop),
+                _diaperOption('poop', AppEmojis.poop, AppLocalizations.of(context).poop),
                 const SizedBox(width: 24),
-                _diaperOption('both', '💧💩', AppLocalizations.of(context).poopPee),
+                _diaperOption('both', AppEmojis.both, AppLocalizations.of(context).poopPee),
               ],
             ),
           ],
