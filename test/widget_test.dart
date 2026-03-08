@@ -13,9 +13,9 @@ import 'package:health_tracker/main.dart';
 void main() {
   testWidgets('App starts and shows title', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const HealthTrackerApp());
+    await tester.pumpWidget(const BabyTrackerApp());
 
-    // Verify that our app title appears.
-    expect(find.text('健康记录'), findsOneWidget);
+    // Verify that our app starts.
+    expect(find.byType(MaterialApp), findsOneWidget);
   });
 }

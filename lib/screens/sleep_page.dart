@@ -3,25 +3,58 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../models/baby_entries.dart';
 import '../providers/app_provider.dart';
+import '../l10n/app_localizations.dart';
 
 const Color _kPurple = Color(0xFF7B6CF6);
 
 class SleepPage extends StatefulWidget {
-  const SleepPage({super.key});
+  final SleepEntry? entry; // non-null = edit mode
+
+  const SleepPage({super.key, this.entry});
 
   @override
   State<SleepPage> createState() => _SleepPageState();
 }
 
 class _SleepPageState extends State<SleepPage> {
-  DateTime _startTime = DateTime.now();
-  DateTime _endTime = DateTime.now();
-  final _notesCtrl = TextEditingController();
+  late DateTime _startTime;
+  DateTime? _endTime;
+  late final TextEditingController _notesCtrl;
+
+  bool get _isEdit => widget.entry != null;
+
+  @override
+  void initState() {
+    super.initState();
+    if (_isEdit) {
+      _startTime = widget.entry!.startTime;
+      _endTime = widget.entry!.endTime;
+      _notesCtrl = TextEditingController(text: widget.entry!.notes ?? '');
+    } else {
+      _startTime = DateTime.now();
+      _endTime = null;
+      _notesCtrl = TextEditingController();
+    }
+  }
 
   @override
   void dispose() {
     _notesCtrl.dispose();
     super.dispose();
+  }
+
+  String _dateLabel(DateTime? dt) {
+    if (dt == null) return '日期';
+    final now = DateTime.now();
+    if (dt.year == now.year && dt.month == now.month && dt.day == now.day) {
+      return '今天';
+    }
+    return DateFormat('MM-dd').format(dt);
+  }
+
+  String _timeLabel(DateTime? dt) {
+    if (dt == null) return '时间';
+    return DateFormat('HH:mm').format(dt);
   }
 
   @override
@@ -37,10 +70,10 @@ class _SleepPageState extends State<SleepPage> {
                 children: [
                   _sectionCard([
                     _timeRow('开始时间', _startTime, _pickStartDate,
-                        _pickStartTime),
+                        _pickStartTime, false),
                     _divider(),
-                    _timeRow('结束时间', _endTime, _pickEndDate,
-                        _pickEndTime),
+                    _timeRow(
+                        '结束时间', _endTime, _pickEndDate, _pickEndTime, true),
                   ]),
                   const SizedBox(height: 10),
                   _notesSection(),
@@ -58,8 +91,8 @@ class _SleepPageState extends State<SleepPage> {
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
-        title: const Text('睡眠记录',
-            style: TextStyle(
+        title: Text(AppLocalizations.of(context).sleepPageTitle,
+            style: const TextStyle(
                 fontSize: 17,
                 fontWeight: FontWeight.w600,
                 color: Colors.black)),
@@ -74,47 +107,40 @@ class _SleepPageState extends State<SleepPage> {
         ),
       );
 
-  Widget _sectionCard(List<Widget> children) => Container(
-        color: Colors.white,
-        child: Column(children: children),
-      );
+  Widget _sectionCard(List<Widget> children) =>
+      Container(color: Colors.white, child: Column(children: children));
 
   Widget _divider() =>
       const Divider(height: 0.5, thickness: 0.5, indent: 16);
 
-  Widget _timeRow(String label, DateTime dt, VoidCallback onDateTap,
-          VoidCallback onTimeTap) =>
-      Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        child: Row(
-          children: [
-            Text(label,
-                style: const TextStyle(
-                    fontSize: 16, color: Colors.black)),
-            const Spacer(),
-            _pillBtn(_dateLabel(dt), isTime: false, onTap: onDateTap),
-            const SizedBox(width: 8),
-            _pillBtn(DateFormat('HH:mm').format(dt),
-                isTime: true, onTap: onTimeTap),
-          ],
-        ),
-      );
-
-  String _dateLabel(DateTime dt) {
-    final now = DateTime.now();
-    if (dt.year == now.year &&
-        dt.month == now.month &&
-        dt.day == now.day) return '今天';
-    return DateFormat('MM-dd').format(dt);
+  Widget _timeRow(String label, DateTime? dt, VoidCallback onDateTap,
+      VoidCallback onTimeTap, bool isEnd) {
+    final hasValue = dt != null;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      child: Row(
+        children: [
+          Text(label,
+              style: const TextStyle(fontSize: 16, color: Colors.black)),
+          const Spacer(),
+          _pillBtn(_dateLabel(dt),
+              isTime: false, isEmpty: isEnd && !hasValue, onTap: onDateTap),
+          const SizedBox(width: 8),
+          _pillBtn(_timeLabel(dt),
+              isTime: true, isEmpty: isEnd && !hasValue, onTap: onTimeTap),
+        ],
+      ),
+    );
   }
 
   Widget _pillBtn(String text,
-          {required bool isTime, required VoidCallback onTap}) =>
+          {required bool isTime,
+          bool isEmpty = false,
+          required VoidCallback onTap}) =>
       GestureDetector(
         onTap: onTap,
         child: Container(
-          padding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
             color: const Color(0xFFF2F2F2),
             borderRadius: BorderRadius.circular(8),
@@ -122,9 +148,11 @@ class _SleepPageState extends State<SleepPage> {
           child: Text(text,
               style: TextStyle(
                 fontSize: 15,
-                color: isTime ? _kPurple : const Color(0xFF555555),
+                color: isEmpty
+                    ? const Color(0xFFBBBBBB)
+                    : (isTime ? _kPurple : const Color(0xFF555555)),
                 fontWeight:
-                    isTime ? FontWeight.w500 : FontWeight.normal,
+                    (!isEmpty && isTime) ? FontWeight.w500 : FontWeight.normal,
               )),
         ),
       );
@@ -143,13 +171,13 @@ class _SleepPageState extends State<SleepPage> {
             const SizedBox(height: 10),
             TextField(
               controller: _notesCtrl,
-              maxLines: 4,
+              maxLines: 5,
               maxLength: 200,
               style: const TextStyle(fontSize: 14),
-              decoration: const InputDecoration(
-                hintText: '选填，比如宝宝睡觉时出现的小问题、睡眠环境等',
+              decoration: InputDecoration(
+                hintText: AppLocalizations.of(context).sleepNotesHint,
                 hintStyle:
-                    TextStyle(color: Color(0xFFBBBBBB), fontSize: 14),
+                    const TextStyle(color: Color(0xFFBBBBBB), fontSize: 14),
                 border: InputBorder.none,
                 counterStyle: TextStyle(color: Color(0xFFBBBBBB)),
               ),
@@ -162,22 +190,44 @@ class _SleepPageState extends State<SleepPage> {
         color: const Color(0xFFF5F5F5),
         padding: EdgeInsets.fromLTRB(
             24, 16, 24, 16 + MediaQuery.of(context).padding.bottom),
-        child: SizedBox(
-          width: double.infinity,
-          height: 52,
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _kPurple,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(28)),
-              elevation: 0,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _kPurple,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(28)),
+                  elevation: 0,
+                ),
+                onPressed: _save,
+                child: const Text('保存',
+                    style: TextStyle(
+                        fontSize: 17, fontWeight: FontWeight.w500)),
+              ),
             ),
-            onPressed: _save,
-            child: const Text('保存',
-                style: TextStyle(
-                    fontSize: 17, fontWeight: FontWeight.w500)),
-          ),
+            if (_isEdit) ...[
+              const SizedBox(height: 12),
+              GestureDetector(
+                onTap: _delete,
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.delete_outline,
+                        size: 16, color: Color(0xFF888888)),
+                    SizedBox(width: 4),
+                    Text('删除这条记录',
+                        style: TextStyle(
+                            fontSize: 14, color: Color(0xFF888888))),
+                  ],
+                ),
+              ),
+            ],
+          ],
         ),
       );
 
@@ -189,8 +239,8 @@ class _SleepPageState extends State<SleepPage> {
       lastDate: DateTime.now(),
     );
     if (p != null) {
-      setState(() => _startTime = DateTime(p.year, p.month, p.day,
-          _startTime.hour, _startTime.minute));
+      setState(() => _startTime = DateTime(
+          p.year, p.month, p.day, _startTime.hour, _startTime.minute));
     }
   }
 
@@ -199,43 +249,58 @@ class _SleepPageState extends State<SleepPage> {
         context: context,
         initialTime: TimeOfDay.fromDateTime(_startTime));
     if (p != null) {
-      setState(() => _startTime = DateTime(_startTime.year,
-          _startTime.month, _startTime.day, p.hour, p.minute));
+      setState(() => _startTime = DateTime(
+          _startTime.year, _startTime.month, _startTime.day, p.hour, p.minute));
     }
   }
 
   Future<void> _pickEndDate() async {
+    final initial = _endTime ?? DateTime.now();
     final p = await showDatePicker(
       context: context,
-      initialDate: _endTime,
+      initialDate: initial,
       firstDate: DateTime(2020),
       lastDate: DateTime.now().add(const Duration(days: 1)),
     );
     if (p != null) {
-      setState(() => _endTime = DateTime(
-          p.year, p.month, p.day, _endTime.hour, _endTime.minute));
+      final prev = _endTime ?? DateTime.now();
+      setState(() => _endTime =
+          DateTime(p.year, p.month, p.day, prev.hour, prev.minute));
     }
   }
 
   Future<void> _pickEndTime() async {
+    final initial = _endTime ?? DateTime.now();
     final p = await showTimePicker(
-        context: context,
-        initialTime: TimeOfDay.fromDateTime(_endTime));
+        context: context, initialTime: TimeOfDay.fromDateTime(initial));
     if (p != null) {
-      setState(() => _endTime = DateTime(_endTime.year, _endTime.month,
-          _endTime.day, p.hour, p.minute));
+      final prev = _endTime ?? DateTime.now();
+      setState(() => _endTime =
+          DateTime(prev.year, prev.month, prev.day, p.hour, p.minute));
     }
   }
 
   void _save() {
-    Provider.of<AppProvider>(context, listen: false).addSleep(SleepEntry(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
+    final provider = Provider.of<AppProvider>(context, listen: false);
+    final entry = SleepEntry(
+      id: _isEdit
+          ? widget.entry!.id
+          : DateTime.now().millisecondsSinceEpoch.toString(),
       startTime: _startTime,
-      endTime: _endTime.isAfter(_startTime) ? _endTime : null,
-      notes: _notesCtrl.text.trim().isEmpty
-          ? null
-          : _notesCtrl.text.trim(),
-    ));
+      endTime: _endTime,
+      notes: _notesCtrl.text.trim().isEmpty ? null : _notesCtrl.text.trim(),
+    );
+    if (_isEdit) {
+      provider.updateSleep(entry);
+    } else {
+      provider.addSleep(entry);
+    }
+    Navigator.pop(context);
+  }
+
+  void _delete() {
+    Provider.of<AppProvider>(context, listen: false)
+        .removeEntry('sleep', widget.entry!.id);
     Navigator.pop(context);
   }
 }

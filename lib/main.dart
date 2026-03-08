@@ -4,11 +4,10 @@ import 'package:intl/intl.dart';
 import 'providers/app_provider.dart';
 import 'models/baby_entries.dart';
 import 'screens/feeding_page.dart';
-import 'screens/medication_page.dart';
 import 'screens/diaper_page.dart';
-import 'screens/solid_food_page.dart';
 import 'screens/sleep_page.dart';
-import 'l10n/strings.dart';
+import 'screens/generic_record_page.dart';
+import 'screens/custom_page.dart';
 import 'l10n/app_localizations.dart';
 
 void main() {
@@ -26,7 +25,7 @@ class BabyTrackerApp extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (_) => AppProvider(),
       child: MaterialApp(
-        title: AppStrings.appTitle,
+        title: AppLocalizations.of(context).appTitle,
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: kPrimary),
           useMaterial3: true,
@@ -39,7 +38,7 @@ class BabyTrackerApp extends StatelessWidget {
   }
 }
 
-// ─── Timeline entry (unified) ─────────────────────────────────────────────────
+// ─── Unified timeline entry ────────────────────────────────────────────────────
 
 class _Entry {
   final DateTime timestamp;
@@ -55,7 +54,7 @@ class _Entry {
   });
 }
 
-// ─── Home Page ────────────────────────────────────────────────────────────────
+// ─── Home Page ─────────────────────────────────────────────────────────────────
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -66,14 +65,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   DateTime _selectedDate = DateTime.now();
-  String _filter = AppStrings.all; // '全部' | 'feeding' | 'med' | 'diaper' | 'solidFood' | 'sleep'
-
-  bool get _isToday {
-    final now = DateTime.now();
-    return _selectedDate.year == now.year &&
-        _selectedDate.month == now.month &&
-        _selectedDate.day == now.day;
-  }
+  bool _summaryExpanded = false;
 
   bool _sameDay(DateTime dt) =>
       dt.year == _selectedDate.year &&
@@ -86,36 +78,24 @@ class _HomePageState extends State<HomePage> {
           .where((e) => _sameDay(e.timestamp))
           .map((e) =>
               _Entry(timestamp: e.timestamp, type: 'feeding', id: e.id, data: e)),
-      ...p.medEntries
-          .where((e) => _sameDay(e.timestamp))
-          .map((e) =>
-              _Entry(timestamp: e.timestamp, type: 'med', id: e.id, data: e)),
       ...p.diaperEntries
           .where((e) => _sameDay(e.timestamp))
           .map((e) =>
               _Entry(timestamp: e.timestamp, type: 'diaper', id: e.id, data: e)),
-      ...p.solidFoodEntries
-          .where((e) => _sameDay(e.timestamp))
-          .map((e) => _Entry(
-              timestamp: e.timestamp, type: 'solidFood', id: e.id, data: e)),
       ...p.sleepEntries
           .where((e) => _sameDay(e.startTime))
           .map((e) => _Entry(
               timestamp: e.startTime, type: 'sleep', id: e.id, data: e)),
+      ...p.genericEntries
+          .where((e) => _sameDay(e.startTime))
+          .map((e) => _Entry(
+              timestamp: e.startTime, type: 'generic', id: e.id, data: e)),
+      ...p.customEntries
+          .where((e) => _sameDay(e.startTime))
+          .map((e) => _Entry(
+              timestamp: e.startTime, type: 'custom', id: e.id, data: e)),
     ]..sort((a, b) => a.timestamp.compareTo(b.timestamp));
-
-    if (_filter == AppStrings.all) return all;
-    return all.where((e) => e.type == _filter).toList();
-  }
-
-  void _prevDay() =>
-      setState(() => _selectedDate = _selectedDate.subtract(const Duration(days: 1)));
-
-  void _nextDay() {
-    final next = _selectedDate.add(const Duration(days: 1));
-    if (!next.isAfter(DateTime.now())) {
-      setState(() => _selectedDate = next);
-    }
+    return all;
   }
 
   Future<void> _pickDate() async {
@@ -142,13 +122,12 @@ class _HomePageState extends State<HomePage> {
             child: Container(
               decoration: const BoxDecoration(
                 color: Color(0xFFF5F5F7),
-                borderRadius:
-                    BorderRadius.vertical(top: Radius.circular(20)),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
               ),
               child: Column(
                 children: [
-                  _buildFilterBar(provider),
-                  _buildSummaryBar(context, provider),
+                  _buildSummaryCard(provider),
+                  const SizedBox(height: 8),
                   Expanded(
                     child: entries.isEmpty
                         ? _buildEmpty()
@@ -164,21 +143,36 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // ─── Header ──────────────────────────────────────────────────────────────
+  // ─── Header ────────────────────────────────────────────────────────────────
 
   Widget _buildHeader() {
     final label = DateFormat('yyyy.MM.dd').format(_selectedDate);
     return SafeArea(
       bottom: false,
       child: SizedBox(
-        height: 56,
+        height: 60,
         child: Row(
           children: [
-            IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new,
-                  color: Colors.white, size: 20),
-              onPressed: _prevDay,
+            // "我" avatar
+            Padding(
+              padding: const EdgeInsets.only(left: 14),
+              child: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.25),
+                  shape: BoxShape.circle,
+                ),
+                child: const Center(
+                  child: Text('我',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500)),
+                ),
+              ),
             ),
+            // Date (centered, tappable)
             Expanded(
               child: GestureDetector(
                 onTap: _pickDate,
@@ -201,6 +195,7 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ),
+            // Left/Right day navigation
             IconButton(
               icon: const Icon(Icons.calendar_month_outlined,
                   color: Colors.white, size: 22),
@@ -217,123 +212,207 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // ─── Filter bar ──────────────────────────────────────────────────────────
+  // ─── Summary card (expandable) ─────────────────────────────────────────────
 
-  Widget _buildFilterBar(AppProvider provider) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
-      child: Row(
-        children: [
-          _filterDropdown(),
-          const Spacer(),
-          Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: const Color(0xFF07C160).withOpacity(0.1),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: const Row(
-              children: [
-                Icon(Icons.people_outline,
-                    color: Color(0xFF07C160), size: 16),
-                SizedBox(width: 4),
-                Text(AppStrings.inviteFriends,
-                    style: TextStyle(
-                        color: Color(0xFF07C160),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500)),
-              ],
-            ),
+  Widget _buildSummaryCard(AppProvider provider) {
+    final feedCount =
+        provider.feedingEntries.where((e) => _sameDay(e.timestamp)).toList();
+    final diaperList =
+        provider.diaperEntries.where((e) => _sameDay(e.timestamp)).toList();
+    final sleepList =
+        provider.sleepEntries.where((e) => _sameDay(e.startTime)).toList();
+    final genericList =
+        provider.genericEntries.where((e) => _sameDay(e.startTime)).toList();
+    final customList =
+        provider.customEntries.where((e) => _sameDay(e.startTime)).toList();
+
+    // Build summary parts
+    final parts = <String>[];
+    if (feedCount.isNotEmpty) parts.add('喂奶 ${feedCount.length}次');
+    if (diaperList.isNotEmpty) parts.add('解便 ${diaperList.length}次');
+    if (sleepList.isNotEmpty) parts.add('睡眠 ${sleepList.length}次');
+    for (final t in ['锻炼', '觉察', '疗愈', '真我']) {
+      final cnt = genericList.where((e) => e.type == t).length;
+      if (cnt > 0) parts.add('$t ${cnt}次');
+    }
+    if (customList.isNotEmpty) parts.add('自定义 ${customList.length}次');
+
+    final summaryText = parts.isEmpty
+        ? AppLocalizations.of(context).todayNoRecords
+        : '· ${parts.join(' · ')}';
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(AppLocalizations.of(context).todayRecordsSummary,
+                  style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF222222))),
+              const Spacer(),
+              GestureDetector(
+                onTap: () =>
+                    setState(() => _summaryExpanded = !_summaryExpanded),
+                child: Text(
+                  _summaryExpanded
+                      ? AppLocalizations.of(context).collapseDetails
+                      : AppLocalizations.of(context).expandDetails,
+                  style: const TextStyle(
+                      fontSize: 13, color: Color(0xFF999999)),
+                ),
+              ),
+            ],
+          ),
+          if (!_summaryExpanded) ...[
+            const SizedBox(height: 8),
+            Text(summaryText,
+                style: const TextStyle(
+                    fontSize: 13, color: Color(0xFF555555))),
+          ],
+          if (_summaryExpanded) ...[
+            const SizedBox(height: 12),
+            _buildExpandedSummary(
+                context, feedCount, diaperList, sleepList, genericList, customList),
+          ],
         ],
       ),
     );
   }
 
-  Widget _filterDropdown() {
-    const options = <String, String>{
-      '全部': AppStrings.all,
-      'feeding': AppStrings.feeding,
-      'med': AppStrings.medication,
-      'diaper': AppStrings.diaper,
-      'solidFood': AppStrings.solidFood,
-      'sleep': AppStrings.sleep,
-    };
-    final label = options[_filter] ?? AppStrings.all;
+  Widget _buildExpandedSummary(
+    BuildContext context,
+    List<FeedingEntry> feedList,
+    List<DiaperEntry> diaperList,
+    List<SleepEntry> sleepList,
+    List<GenericEntry> genericList,
+    List<CustomEntry> customList,
+  ) {
+    final rows = <Widget>[];
 
-    return GestureDetector(
-      onTap: () async {
-        final entry = await showMenu<String>(
-          context: context,
-          position: const RelativeRect.fromLTRB(16, 120, 0, 0),
-          items: options.entries
-              .map((e) => PopupMenuItem(
-                    value: e.key,
-                    child: Text(e.value),
-                  ))
-              .toList(),
-        );
-        if (entry != null) setState(() => _filter = entry);
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 4,
-              offset: const Offset(0, 1),
-            ),
+    // Feeding
+    if (feedList.isNotEmpty) {
+      final totalMl = feedList.fold<int>(0, (s, e) => s + e.amountMl);
+      rows.add(_summaryRow('· ${AppLocalizations.of(context).feedingSummaryLabel}',
+          AppLocalizations.of(context).timesLabel(feedList.length),
+          AppLocalizations.of(context).totalMlLabel(totalMl),
+          isParent: true));
+      rows.add(_summaryRow('  ${AppLocalizations.of(context).feedingPageTitle}',
+          AppLocalizations.of(context).timesLabel(feedList.length),
+          '${totalMl}mL',
+          isParent: false));
+    }
+
+    // Diaper
+    if (diaperList.isNotEmpty) {
+      rows.add(
+          _summaryRow('· ${AppLocalizations.of(context).diaperSummaryLabel}',
+          AppLocalizations.of(context).timesLabel(diaperList.length), '', isParent: true));
+      final wetCount = diaperList
+          .where((e) => e.diaperType == 'wet' || e.diaperType == 'both')
+          .length;
+      final poopCount = diaperList
+          .where((e) => e.diaperType == 'poop' || e.diaperType == 'both')
+          .length;
+      if (wetCount > 0) {
+        rows.add(_summaryRow('  ${AppLocalizations.of(context).pee}',
+          '${wetCount}次', '', isParent: false));
+      }
+      if (poopCount > 0) {
+        rows.add(_summaryRow('  ${AppLocalizations.of(context).poop}',
+          '${poopCount}次', '', isParent: false));
+      }
+    }
+
+    // Sleep
+    if (sleepList.isNotEmpty) {
+      int totalMin = 0;
+      for (final e in sleepList) {
+        if (e.endTime != null) {
+          totalMin += e.endTime!.difference(e.startTime).inMinutes;
+        }
+      }
+      final durStr = totalMin > 0
+          ? '共${totalMin ~/ 60}小时${totalMin % 60}分钟'
+          : '';
+      rows.add(_summaryRow('· ${AppLocalizations.of(context).sleepSummaryLabel}',
+          AppLocalizations.of(context).timesLabel(sleepList.length), durStr,
+          isParent: true));
+    }
+
+    // Generic types
+    for (final t in ['锻炼', '觉察', '疗愈', '真我']) {
+      final list = genericList.where((e) => e.type == t).toList();
+      if (list.isNotEmpty) {
+        rows.add(_summaryRow('· $t', '${list.length}次', '', isParent: true));
+      }
+    }
+
+    // Custom
+    if (customList.isNotEmpty) {
+      final first = customList.first;
+      rows.add(_summaryRow(
+          '· 自定义', '${customList.length}次',
+          first.eventName.isNotEmpty ? first.eventName : '',
+          isParent: true));
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: rows,
+    );
+  }
+
+  Widget _summaryRow(String label, String count, String extra,
+      {required bool isParent}) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: isParent ? 4 : 2, top: isParent ? 4 : 0),
+      child: Row(
+        children: [
+          Text(label,
+              style: TextStyle(
+                  fontSize: isParent ? 14 : 13,
+                  color: isParent
+                      ? const Color(0xFF333333)
+                      : const Color(0xFF999999),
+                  fontWeight: isParent ? FontWeight.w500 : FontWeight.normal)),
+          const SizedBox(width: 12),
+          Text(count,
+              style: TextStyle(
+                  fontSize: isParent ? 14 : 13,
+                  color: isParent
+                      ? const Color(0xFF333333)
+                      : const Color(0xFF999999))),
+          if (extra.isNotEmpty) ...[
+            const SizedBox(width: 12),
+            Text(extra,
+                style: TextStyle(
+                    fontSize: isParent ? 14 : 13,
+                    color: isParent
+                        ? const Color(0xFF333333)
+                        : const Color(0xFF999999))),
           ],
-        ),
-        child: Row(
-          children: [
-            Text(label,
-                style: const TextStyle(
-                    fontSize: 14,
-                    color: Color(0xFF333333),
-                    fontWeight: FontWeight.w500)),
-            const SizedBox(width: 4),
-            const Icon(Icons.keyboard_arrow_down,
-                size: 16, color: Color(0xFF888888)),
-          ],
-        ),
+        ],
       ),
     );
   }
 
-  // ─── Summary bar ─────────────────────────────────────────────────────────
-
-  Widget _buildSummaryBar(BuildContext context, AppProvider provider) {
-    final feedCount = provider.feedingEntries.where((e) => _sameDay(e.timestamp)).length;
-    final medCount = provider.medEntries.where((e) => _sameDay(e.timestamp)).length;
-    final diaperCount = provider.diaperEntries.where((e) => _sameDay(e.timestamp)).length;
-    final solidCount = provider.solidFoodEntries.where((e) => _sameDay(e.timestamp)).length;
-    final sleepCount = provider.sleepEntries.where((e) => _sameDay(e.startTime)).length;
-
-    final parts = <String>[];
-    if (feedCount > 0) parts.add(AppLocalizations.of(context).feedingCount(feedCount));
-    if (medCount > 0) parts.add(AppLocalizations.of(context).medicationCount(medCount));
-    if (diaperCount > 0) parts.add(AppLocalizations.of(context).diaperCount(diaperCount));
-    if (solidCount > 0) parts.add(AppLocalizations.of(context).solidFoodCount(solidCount));
-    if (sleepCount > 0) parts.add(AppLocalizations.of(context).sleepCount(sleepCount));
-
-    final text = parts.isEmpty ? AppStrings.todayNoRecords : '· ${parts.join(' · ')}';
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 10),
-      child: Text(
-        text,
-        style: const TextStyle(fontSize: 13, color: Color(0xFF888888)),
-      ),
-    );
-  }
-
-  // ─── Empty state ─────────────────────────────────────────────────────────
+  // ─── Empty state ───────────────────────────────────────────────────────────
 
   Widget _buildEmpty() {
     return Center(
@@ -341,43 +420,43 @@ class _HomePageState extends State<HomePage> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text('👶',
-              style: TextStyle(
-                  fontSize: 72, color: Colors.grey.shade300)),
+              style: TextStyle(fontSize: 72, color: Colors.grey.shade300)),
           const SizedBox(height: 12),
-          const Text(AppStrings.noRecords,
-              style: TextStyle(color: Color(0xFF999999), fontSize: 16)),
+          Text(AppLocalizations.of(context).noRecords,
+              style: const TextStyle(color: Color(0xFF999999), fontSize: 16)),
           const SizedBox(height: 6),
-          const Text(AppStrings.clickToAdd,
-              style: TextStyle(color: Color(0xFFBBBBBB), fontSize: 13)),
+          Text(AppLocalizations.of(context).clickToAdd,
+              style: const TextStyle(color: Color(0xFFBBBBBB), fontSize: 13)),
         ],
       ),
     );
   }
 
-  // ─── Timeline ────────────────────────────────────────────────────────────
+  // ─── Timeline ──────────────────────────────────────────────────────────────
 
-  Widget _buildTimeline(BuildContext context, List<_Entry> entries, AppProvider provider) {
+  Widget _buildTimeline(BuildContext context, List<_Entry> entries,
+      AppProvider provider) {
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       itemCount: entries.length,
-      itemBuilder: (ctx, i) =>
-          _buildTimelineRow(ctx, entries[i], provider, i == entries.length - 1),
+      itemBuilder: (ctx, i) => _buildTimelineRow(
+          ctx, entries[i], provider, i == entries.length - 1),
     );
   }
 
-  Widget _buildTimelineRow(
-      BuildContext context, _Entry entry, AppProvider provider, bool isLast) {
+  Widget _buildTimelineRow(BuildContext context, _Entry entry,
+      AppProvider provider, bool isLast) {
     final now = DateTime.now();
     final diff = now.difference(entry.timestamp);
     final String ago;
     if (diff.inMinutes < 1) {
-      ago = AppLocalizations.of(context).justNow;
+      ago = '刚刚';
     } else if (diff.inMinutes < 60) {
-      ago = AppLocalizations.of(context).minutesAgo(diff.inMinutes);
+      ago = '${diff.inMinutes}分钟前';
     } else if (diff.inHours < 24) {
       final h = diff.inHours;
       final m = diff.inMinutes % 60;
-      ago = m > 0 ? AppLocalizations.of(context).hoursMinutesAgo(h, m) : AppLocalizations.of(context).hoursAgo(h);
+      ago = m > 0 ? '$h小时$m分钟前' : '$h小时前';
     } else {
       ago = DateFormat('MM-dd').format(entry.timestamp);
     }
@@ -397,7 +476,7 @@ class _HomePageState extends State<HomePage> {
           children: [
             // Time column
             SizedBox(
-              width: 66,
+              width: 68,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
@@ -429,15 +508,14 @@ class _HomePageState extends State<HomePage> {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     shape: BoxShape.circle,
-                    border: Border.all(
-                        color: const Color(0xFFCCCCCC), width: 2),
+                    border:
+                        Border.all(color: const Color(0xFFCCCCCC), width: 2),
                   ),
                 ),
                 if (!isLast)
                   Expanded(
                     child: Container(
-                        width: 1.5,
-                        color: const Color(0xFFE0E0E0)),
+                        width: 1.5, color: const Color(0xFFE0E0E0)),
                   ),
               ],
             ),
@@ -462,49 +540,69 @@ class _HomePageState extends State<HomePage> {
         return _TimelineCard(
           emoji: '🍼',
           emojiColor: const Color(0xFFE3F0FC),
-          title: AppLocalizations.of(context).feeding,
+          title: '投喂',
           trailing: '${e.amountMl}mL',
-        );
-      case 'med':
-        final e = entry.data as MedEntry;
-        return _TimelineCard(
-          emoji: '💊',
-          emojiColor: const Color(0xFFF0EEFF),
-          title: AppLocalizations.of(context).medication,
-          subtitle: e.medicines.isEmpty ? null : e.medicines.join('、'),
+          onTap: () => _goto(FeedingPage(entry: e)),
         );
       case 'diaper':
         final e = entry.data as DiaperEntry;
-        final isDry = e.diaperType == 'wet';
+        final emoji = e.diaperType == 'wet'
+            ? '💧'
+            : e.diaperType == 'poop'
+                ? '💩'
+                : '💧💩';
         return _TimelineCard(
-          emoji: isDry ? '💧' : '💩',
-          emojiColor: isDry
+          emoji: emoji,
+          emojiColor: e.diaperType == 'wet'
               ? const Color(0xFFE3F0FC)
               : const Color(0xFFFFF3E0),
           title: e.typeLabel,
-        );
-      case 'solidFood':
-        final e = entry.data as SolidFoodEntry;
-        return _TimelineCard(
-          emoji: '🥣',
-          emojiColor: const Color(0xFFFFEEF0),
-          title: AppLocalizations.of(context).solidFood,
-          subtitle: e.texture,
+          onTap: () => _goto(DiaperPage(entry: e)),
         );
       case 'sleep':
         final e = entry.data as SleepEntry;
+        final endLabel = e.endTime != null
+            ? '(${DateFormat('HH:mm').format(e.endTime!)} 结束）'
+            : '';
         return _TimelineCard(
           emoji: '🌙',
           emojiColor: const Color(0xFFFFF8E1),
-          title: AppLocalizations.of(context).sleep,
+          title: '睡眠$endLabel',
           trailing: e.durationText,
+          onTap: () => _goto(SleepPage(entry: e)),
+        );
+      case 'generic':
+        final e = entry.data as GenericEntry;
+        final icons = {
+          '锻炼': ('🚩', const Color(0xFFFFEFDF)),
+          '觉察': ('🌡️', const Color(0xFFE8F8F0)),
+          '疗愈': ('💊', const Color(0xFFF0EEFF)),
+          '真我': ('🤱', const Color(0xFFFFEEF0)),
+          '睡眠': ('🌙', const Color(0xFFFFF8E1)),
+        };
+        final icon = icons[e.type] ?? ('📝', const Color(0xFFF5F5F5));
+        return _TimelineCard(
+          emoji: icon.$1,
+          emojiColor: icon.$2,
+          title: e.type,
+          subtitle: e.notes,
+          onTap: () => _goto(GenericRecordPage(type: e.type, entry: e)),
+        );
+      case 'custom':
+        final e = entry.data as CustomEntry;
+        return _TimelineCard(
+          emoji: '✏️',
+          emojiColor: const Color(0xFFFFF5E0),
+          title: e.eventName.isNotEmpty ? e.eventName : '自定义',
+          subtitle: e.notes,
+          onTap: () => _goto(CustomPage(entry: e)),
         );
       default:
         return const SizedBox.shrink();
     }
   }
 
-  // ─── Bottom bar ──────────────────────────────────────────────────────────
+  // ─── Bottom bar (2 rows × 4) ───────────────────────────────────────────────
 
   Widget _buildBottomBar(BuildContext context, AppProvider provider) {
     return Container(
@@ -520,107 +618,53 @@ class _HomePageState extends State<HomePage> {
       ),
       child: SafeArea(
         top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Drag handle
-            GestureDetector(
-              onTap: () => _showAllActionsSheet(provider),
-              onVerticalDragEnd: (d) {
-                if (d.primaryVelocity != null &&
-                    d.primaryVelocity! < -200) {
-                  _showAllActionsSheet(provider);
-                }
-              },
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Container(
-                  width: 36,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFDDDDDD),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-            ),
-            // 4 main actions
-            Padding(
-              padding: const EdgeInsets.fromLTRB(8, 0, 8, 10),
-              child: Row(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(0, 12, 0, 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Row 1
+              Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _BottomActionBtn(
-                    emoji: '🍼',
-                    label: AppLocalizations.of(context).feeding,
-                    color: const Color(0xFF5B9BD5),
-                    onTap: () => _goto(const FeedingPage()),
-                  ),
-                  _BottomActionBtn(
-                    emoji: '💊',
-                    label: AppLocalizations.of(context).medication,
-                    color: const Color(0xFF9B8FF9),
-                    onTap: () => _goto(const MedicationPage()),
-                  ),
-                  _BottomActionBtn(
-                    emoji: '👶',
-                    label: AppLocalizations.of(context).diaper,
-                    color: const Color(0xFF5B9BD5),
-                    onTap: () => _goto(const DiaperPage()),
-                  ),
-                  _BottomActionBtn(
-                    emoji: '🥣',
-                    label: AppLocalizations.of(context).solidFood,
-                    color: const Color(0xFFE57A8A),
-                    onTap: () => _goto(const SolidFoodPage()),
-                  ),
+                  _BottomBtn('🍼', '投喂', const Color(0xFF5B9BD5),
+                      () => _goto(const FeedingPage())),
+                  _BottomBtn('👶', '解便', const Color(0xFF5B9BD5),
+                      () => _goto(const DiaperPage())),
+                  _BottomBtn('🌙', '睡眠', const Color(0xFFE8A020),
+                      () => _goto(const SleepPage())),
+                  _BottomBtn('🚩', '锻炼', const Color(0xFF9B8FF9),
+                      () => _goto(const GenericRecordPage(type: '锻炼'))),
                 ],
               ),
-            ),
-          ],
+              const SizedBox(height: 4),
+              // Row 2
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _BottomBtn('🌡️', '觉察', const Color(0xFF3DB070),
+                      () => _goto(const GenericRecordPage(type: '觉察'))),
+                  _BottomBtn('💊', '疗愈', const Color(0xFF7B9BD5),
+                      () => _goto(const GenericRecordPage(type: '疗愈'))),
+                  _BottomBtn('🤱', '真我', const Color(0xFF3DB070),
+                      () => _goto(const GenericRecordPage(type: '真我'))),
+                  _BottomBtn('✏️', '自定义', const Color(0xFFE8A020),
+                      () => _goto(const CustomPage())),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
   void _goto(Widget page) {
-    Navigator.push(context,
-        MaterialPageRoute(builder: (_) => page));
-  }
-
-  void _showAllActionsSheet(AppProvider provider) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => _AllActionsSheet(
-        onSelect: (type) {
-          Navigator.pop(context);
-          switch (type) {
-            case 'feeding':
-              _goto(const FeedingPage());
-              break;
-            case 'med':
-              _goto(const MedicationPage());
-              break;
-            case 'diaper':
-              _goto(const DiaperPage());
-              break;
-            case 'solidFood':
-              _goto(const SolidFoodPage());
-              break;
-            case 'sleep':
-              _goto(const SleepPage());
-              break;
-          }
-        },
-      ),
-    );
+    Navigator.push(context, MaterialPageRoute(builder: (_) => page));
   }
 }
 
-// ─── Timeline card ───────────────────────────────────────────────────────────
+// ─── Timeline card ─────────────────────────────────────────────────────────────
 
 class _TimelineCard extends StatelessWidget {
   final String emoji;
@@ -628,6 +672,7 @@ class _TimelineCard extends StatelessWidget {
   final String title;
   final String? subtitle;
   final String? trailing;
+  final VoidCallback? onTap;
 
   const _TimelineCard({
     required this.emoji,
@@ -635,261 +680,110 @@ class _TimelineCard extends StatelessWidget {
     required this.title,
     this.subtitle,
     this.trailing,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: emojiColor,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Center(
-              child: Text(emoji,
-                  style: const TextStyle(fontSize: 24)),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF222222),
-                  ),
-                ),
-                if (subtitle != null && subtitle!.isNotEmpty)
-                  Text(
-                    subtitle!,
-                    style: const TextStyle(
-                        fontSize: 12, color: Color(0xFFAAAAAA)),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-              ],
-            ),
-          ),
-          if (trailing != null && trailing!.isNotEmpty)
-            Text(trailing!,
-                style: const TextStyle(
-                    fontSize: 14, color: Color(0xFF999999))),
-          const SizedBox(width: 4),
-          const Icon(Icons.chevron_right,
-              size: 18, color: Color(0xFFCCCCCC)),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── Bottom action button ─────────────────────────────────────────────────────
-
-class _BottomActionBtn extends StatelessWidget {
-  final String emoji;
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _BottomActionBtn({
-    required this.emoji,
-    required this.label,
-    required this.color,
-    required this.onTap,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.10),
-              borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
             ),
-            child: Center(
-              child: Text(emoji,
-                  style: const TextStyle(fontSize: 28)),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: emojiColor,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Center(
+                child: Text(emoji, style: const TextStyle(fontSize: 22)),
+              ),
             ),
-          ),
-          const SizedBox(height: 5),
-          Text(label,
-              style: TextStyle(
-                  fontSize: 12,
-                  color: color,
-                  fontWeight: FontWeight.w500)),
-        ],
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF222222),
+                    ),
+                  ),
+                  if (subtitle != null && subtitle!.isNotEmpty)
+                    Text(
+                      subtitle!,
+                      style: const TextStyle(
+                          fontSize: 12, color: Color(0xFFAAAAAA)),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                ],
+              ),
+            ),
+            if (trailing != null && trailing!.isNotEmpty)
+              Text(trailing!,
+                  style: const TextStyle(
+                      fontSize: 14, color: Color(0xFF999999))),
+            const SizedBox(width: 4),
+            const Icon(Icons.chevron_right,
+                size: 18, color: Color(0xFFCCCCCC)),
+          ],
+        ),
       ),
     );
   }
 }
 
-// ─── All actions bottom sheet ─────────────────────────────────────────────────
+// ─── Bottom action button ──────────────────────────────────────────────────────
 
-class _AllActionsSheet extends StatelessWidget {
-  final void Function(String type) onSelect;
+class _BottomBtn extends StatelessWidget {
+  final String emoji;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
 
-  const _AllActionsSheet({required this.onSelect});
-
-  static const _actions = [
-    _ActionItem('feeding', '🍼', AppStrings.feeding, Color(0xFFE3F0FC)),
-    _ActionItem('med', '💊', AppStrings.medication, Color(0xFFF0EEFF)),
-    _ActionItem('diaper', '👶', AppStrings.diaper, Color(0xFFE3F0FC)),
-    _ActionItem('solidFood', '🥣', AppStrings.solidFood, Color(0xFFFFEEF0)),
-    _ActionItem('milestone', '🚩', AppStrings.milestone, Color(0xFFFFEFDF)),
-    _ActionItem('sleep', '🌙', AppStrings.sleep, Color(0xFFFFF8E1)),
-    _ActionItem('formula', '🍼', AppStrings.formula, Color(0xFFE8F8F0)),
-    _ActionItem('pump', '🤱', AppStrings.pump, Color(0xFFFFEEF0)),
-    _ActionItem('temp', '🌡️', AppStrings.temperature, Color(0xFFE8F8F0)),
-    _ActionItem('breastfeed', '🤱', AppStrings.breastfeed, Color(0xFFFFEEF0)),
-    _ActionItem('custom', '✏️', AppStrings.custom, Color(0xFFF5F5F5)),
-  ];
-
-  static const _navigableTypes = {
-    'feeding', 'med', 'diaper', 'solidFood', 'sleep'
-  };
+  const _BottomBtn(this.emoji, this.label, this.color, this.onTap);
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Handle
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            child: Container(
-              width: 36,
-              height: 4,
-              decoration: BoxDecoration(
-                color: const Color(0xFFDDDDDD),
-                borderRadius: BorderRadius.circular(2),
-              ),
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: SizedBox(
+        width: 72,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(emoji, style: const TextStyle(fontSize: 36)),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                  fontSize: 12,
+                  color: color,
+                  fontWeight: FontWeight.w500),
+              textAlign: TextAlign.center,
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-            child: GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate:
-                  const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 4,
-                mainAxisSpacing: 16,
-                crossAxisSpacing: 8,
-                childAspectRatio: 0.85,
-              ),
-              itemCount: _actions.length,
-              itemBuilder: (_, i) {
-                final a = _actions[i];
-                return GestureDetector(
-                  onTap: () {
-                    if (_navigableTypes.contains(a.type)) {
-                      onSelect(a.type);
-                    } else {
-                      Navigator.pop(context);
-                    }
-                  },
-                  child: Column(
-                    children: [
-                      Container(
-                        width: 60,
-                        height: 60,
-                        decoration: BoxDecoration(
-                          color: a.bgColor,
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Center(
-                          child: Text(a.emoji,
-                              style: const TextStyle(fontSize: 28)),
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(a.label,
-                          style: const TextStyle(
-                              fontSize: 12,
-                              color: Color(0xFF444444)),
-                          textAlign: TextAlign.center),
-                    ],
-                  ),
-                );
-              },
-            ),
-          ),
-          // Bottom buttons
-          Container(
-            decoration: const BoxDecoration(
-                border: Border(
-                    top: BorderSide(color: Color(0xFFEEEEEE)))),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextButton.icon(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.swap_vert,
-                        size: 16, color: Color(0xFF666666)),
-                    label: const Text(AppStrings.customSort,
-                        style: TextStyle(
-                            color: Color(0xFF666666), fontSize: 14)),
-                  ),
-                ),
-                Container(
-                    width: 0.5, height: 36, color: const Color(0xFFEEEEEE)),
-                Expanded(
-                  child: TextButton.icon(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.add,
-                        size: 16, color: Color(0xFF666666)),
-                    label: const Text(AppStrings.addToHome,
-                        style: TextStyle(
-                            color: Color(0xFF666666), fontSize: 14)),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          SizedBox(height: MediaQuery.of(context).padding.bottom),
-        ],
+          ],
+        ),
       ),
     );
   }
-}
-
-class _ActionItem {
-  final String type;
-  final String emoji;
-  final String label;
-  final Color bgColor;
-
-  const _ActionItem(this.type, this.emoji, this.label, this.bgColor);
 }

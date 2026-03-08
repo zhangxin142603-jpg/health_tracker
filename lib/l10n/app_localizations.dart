@@ -14,6 +14,14 @@ class AppLocalizations {
   String get clickToAdd => AppStrings.clickToAdd;
   String get todayNoRecords => AppStrings.todayNoRecords;
   String get today => AppStrings.today;
+  String get todayRecordsSummary => AppStrings.todayRecordsSummary;
+  String get collapseDetails => AppStrings.collapseDetails;
+  String get expandDetails => AppStrings.expandDetails;
+  String get feedingSummaryLabel => AppStrings.feedingSummaryLabel;
+  String get diaperSummaryLabel => AppStrings.diaperSummaryLabel;
+  String get sleepSummaryLabel => AppStrings.sleepSummaryLabel;
+  String totalMlLabel(int ml) => AppStrings.totalMlLabel.replaceAll('{mL}', ml.toString());
+  String timesLabel(int count) => AppStrings.timesLabel.replaceAll('{count}', count.toString());
 
   // ==================== 时间描述 ====================
   String get justNow => AppStrings.justNow;
@@ -30,6 +38,14 @@ class AppLocalizations {
   String get milkAmount => AppStrings.milkAmount;
   String get milkAmountSelector => AppStrings.milkAmountSelector;
   String get customMl => AppStrings.customMl;
+  String get feedingPageTitle => AppStrings.feedingPageTitle;
+  String get milkSourceLabel => AppStrings.milkSourceLabel;
+  String get breastMilkOption => AppStrings.breastMilkOption;
+  String get formulaMilkOption => AppStrings.formulaMilkOption;
+  String get mixedMilkOption => AppStrings.mixedMilkOption;
+  String get milkAmountLabel => AppStrings.milkAmountLabel;
+  String get milkAmountSelectorTitle => AppStrings.milkAmountSelectorTitle;
+  String get customMlOption => AppStrings.customMlOption;
 
   // ==================== 用药模块 ====================
   String get medication => AppStrings.medication;
@@ -52,6 +68,11 @@ class AppLocalizations {
   String get pee => AppStrings.pee;
   String get poopPee => AppStrings.poopPee;
   String get diaperStatus => AppStrings.diaperStatus;
+  String get diaperPageTitle => AppStrings.diaperPageTitle;
+  String get diaperStatusLabel => AppStrings.diaperStatusLabel;
+  String get notesHint => AppStrings.notesHint;
+  String get saveButton => AppStrings.saveButton;
+  String get deleteRecordButton => AppStrings.deleteRecordButton;
   String get urineColor => AppStrings.urineColor;
   String get urineCharacteristics => AppStrings.urineCharacteristics;
   String get multipleChoice => AppStrings.multipleChoice;
@@ -95,6 +116,9 @@ class AppLocalizations {
   String sleepCount(int count) => AppStrings.getSleepCount(count);
   String get startTime => AppStrings.startTime;
   String get endTime => AppStrings.endTime;
+  String get sleepPageTitle => AppStrings.sleepPageTitle;
+  String get sleepNotesHint => AppStrings.sleepNotesHint;
+  String get genericNotesHint => AppStrings.genericNotesHint;
 
   // ==================== 其他功能 ====================
   String get milestone => AppStrings.milestone;
@@ -103,6 +127,9 @@ class AppLocalizations {
   String get temperature => AppStrings.temperature;
   String get breastfeed => AppStrings.breastfeed;
   String get custom => AppStrings.custom;
+  String get customPageTitle => AppStrings.customPageTitle;
+  String get eventNameLabel => AppStrings.eventNameLabel;
+  String get enterEventNameHint => AppStrings.enterEventNameHint;
 
   // ==================== 设置/操作 ====================
   String get customSort => AppStrings.customSort;
@@ -118,7 +145,6 @@ class AppLocalizations {
   String get feedingNotesHint => AppStrings.feedingNotesHint;
   String get diaperNotesHint => AppStrings.diaperNotesHint;
   String get medicationNotesHint => AppStrings.medicationNotesHint;
-  String get sleepNotesHint => AppStrings.sleepNotesHint;
   String get solidFoodNotesHint => AppStrings.solidFoodNotesHint;
 
   // ==================== 便捷访问方法 ====================

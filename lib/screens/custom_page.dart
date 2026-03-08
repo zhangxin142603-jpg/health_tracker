@@ -7,19 +7,19 @@ import '../l10n/app_localizations.dart';
 
 const Color _kPurple = Color(0xFF7B6CF6);
 
-class DiaperPage extends StatefulWidget {
-  final DiaperEntry? entry; // non-null = edit mode
+class CustomPage extends StatefulWidget {
+  final CustomEntry? entry; // non-null = edit mode
 
-  const DiaperPage({super.key, this.entry});
+  const CustomPage({super.key, this.entry});
 
   @override
-  State<DiaperPage> createState() => _DiaperPageState();
+  State<CustomPage> createState() => _CustomPageState();
 }
 
-class _DiaperPageState extends State<DiaperPage> {
+class _CustomPageState extends State<CustomPage> {
   late DateTime _startTime;
   DateTime? _endTime;
-  late String _diaperType;
+  late final TextEditingController _eventNameCtrl;
   late final TextEditingController _notesCtrl;
 
   bool get _isEdit => widget.entry != null;
@@ -28,20 +28,22 @@ class _DiaperPageState extends State<DiaperPage> {
   void initState() {
     super.initState();
     if (_isEdit) {
-      _startTime = widget.entry!.timestamp;
-      _endTime = null;
-      _diaperType = widget.entry!.diaperType;
+      _startTime = widget.entry!.startTime;
+      _endTime = widget.entry!.endTime;
+      _eventNameCtrl =
+          TextEditingController(text: widget.entry!.eventName);
       _notesCtrl = TextEditingController(text: widget.entry!.notes ?? '');
     } else {
       _startTime = DateTime.now();
       _endTime = null;
-      _diaperType = 'both';
+      _eventNameCtrl = TextEditingController();
       _notesCtrl = TextEditingController();
     }
   }
 
   @override
   void dispose() {
+    _eventNameCtrl.dispose();
     _notesCtrl.dispose();
     super.dispose();
   }
@@ -79,7 +81,7 @@ class _DiaperPageState extends State<DiaperPage> {
                         '结束时间', _endTime, _pickEndDate, _pickEndTime, true),
                   ]),
                   const SizedBox(height: 10),
-                  _diaperTypeSection(),
+                  _eventNameSection(),
                   const SizedBox(height: 10),
                   _notesSection(),
                   const SizedBox(height: 10),
@@ -98,7 +100,7 @@ class _DiaperPageState extends State<DiaperPage> {
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
-        title: Text(AppLocalizations.of(context).diaperPageTitle,
+        title: Text(AppLocalizations.of(context).customPageTitle,
             style: const TextStyle(
                 fontSize: 17,
                 fontWeight: FontWeight.w600,
@@ -164,80 +166,32 @@ class _DiaperPageState extends State<DiaperPage> {
         ),
       );
 
-  Widget _diaperTypeSection() => Container(
+  Widget _eventNameSection() => Container(
         color: Colors.white,
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
           children: [
-            Text(AppLocalizations.of(context).diaperStatusLabel,
-                style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.black)),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                _diaperOption('wet', '💧', AppLocalizations.of(context).pee),
-                const SizedBox(width: 24),
-                _diaperOption('poop', '💩', AppLocalizations.of(context).poop),
-                const SizedBox(width: 24),
-                _diaperOption('both', '💧💩', AppLocalizations.of(context).poopPee),
-              ],
+            Text(AppLocalizations.of(context).eventNameLabel,
+                style: const TextStyle(fontSize: 16, color: Colors.black)),
+            const SizedBox(width: 16),
+            Expanded(
+              child: TextField(
+                controller: _eventNameCtrl,
+                textAlign: TextAlign.right,
+                style: const TextStyle(fontSize: 15, color: Color(0xFF333333)),
+                decoration: InputDecoration(
+                  hintText: AppLocalizations.of(context).enterEventNameHint,
+                  hintStyle:
+                      const TextStyle(color: Color(0xFFBBBBBB), fontSize: 15),
+                  border: InputBorder.none,
+                  isDense: true,
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
             ),
           ],
         ),
       );
-
-  Widget _diaperOption(String type, String emoji, String label) {
-    final selected = _diaperType == type;
-    return GestureDetector(
-      onTap: () => setState(() => _diaperType = type),
-      child: Column(
-        children: [
-          Container(
-            width: 68,
-            height: 68,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: selected
-                  ? const Color(0xFFFFF0F0)
-                  : const Color(0xFFF5F5F5),
-              border: Border.all(
-                color: selected ? Colors.pinkAccent : Colors.transparent,
-                width: 2,
-              ),
-            ),
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                Text(emoji, style: const TextStyle(fontSize: 28)),
-                if (selected)
-                  Positioned(
-                    right: 2,
-                    bottom: 2,
-                    child: Container(
-                      width: 20,
-                      height: 20,
-                      decoration: const BoxDecoration(
-                        color: Colors.pinkAccent,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.check,
-                          size: 13, color: Colors.white),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(label,
-              style: const TextStyle(
-                  fontSize: 13, color: Color(0xFF555555))),
-        ],
-      ),
-    );
-  }
 
   Widget _notesSection() => Container(
         color: Colors.white,
@@ -245,21 +199,20 @@ class _DiaperPageState extends State<DiaperPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(AppLocalizations.of(context).notes,
-                style: const TextStyle(
+            const Text('备注',
+                style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
                     color: Colors.black)),
             const SizedBox(height: 10),
             TextField(
               controller: _notesCtrl,
-              maxLines: 4,
+              maxLines: 5,
               maxLength: 200,
               style: const TextStyle(fontSize: 14),
-              decoration: InputDecoration(
-                hintText: AppLocalizations.of(context).diaperNotesHint,
-                hintStyle:
-                    const TextStyle(color: Color(0xFFBBBBBB), fontSize: 14),
+              decoration: const InputDecoration(
+                hintText: '选填，可随时随地记录宝宝的点滴日常，比如：给宝宝喂水、拍嗝、洗澡、抚触按摩、做早教游戏等',
+                hintStyle: TextStyle(color: Color(0xFFBBBBBB), fontSize: 14),
                 border: InputBorder.none,
                 counterStyle: TextStyle(color: Color(0xFFBBBBBB)),
               ),
@@ -391,28 +344,26 @@ class _DiaperPageState extends State<DiaperPage> {
 
   void _save() {
     final provider = Provider.of<AppProvider>(context, listen: false);
-    final entry = DiaperEntry(
+    final entry = CustomEntry(
       id: _isEdit
           ? widget.entry!.id
           : DateTime.now().millisecondsSinceEpoch.toString(),
-      timestamp: _startTime,
-      diaperType: _diaperType,
-      symptoms: const [],
+      startTime: _startTime,
+      endTime: _endTime,
+      eventName: _eventNameCtrl.text.trim(),
       notes: _notesCtrl.text.trim().isEmpty ? null : _notesCtrl.text.trim(),
     );
     if (_isEdit) {
-      // For diaper, no update method yet — remove + add
-      provider.removeEntry('diaper', widget.entry!.id);
-      provider.addDiaper(entry);
+      provider.updateCustom(entry);
     } else {
-      provider.addDiaper(entry);
+      provider.addCustom(entry);
     }
     Navigator.pop(context);
   }
 
   void _delete() {
     Provider.of<AppProvider>(context, listen: false)
-        .removeEntry('diaper', widget.entry!.id);
+        .removeEntry('custom', widget.entry!.id);
     Navigator.pop(context);
   }
 }

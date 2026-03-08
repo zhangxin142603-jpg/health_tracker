@@ -63,7 +63,7 @@ class _MedicationPageState extends State<MedicationPage> {
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
-        title: const Text('用药记录',
+        title: const Text('疗愈记录',
             style: TextStyle(
                 fontSize: 17,
                 fontWeight: FontWeight.w600,
@@ -208,7 +208,7 @@ class _MedicationPageState extends State<MedicationPage> {
             // Common medicines
             Row(
               children: [
-                const Text('常用药品',
+                const Text('常用疗愈',
                     style: TextStyle(
                         fontSize: 14, color: Color(0xFF888888))),
                 const Spacer(),
@@ -294,7 +294,7 @@ class _MedicationPageState extends State<MedicationPage> {
               maxLength: 200,
               style: const TextStyle(fontSize: 14),
               decoration: const InputDecoration(
-                hintText: '选填，比如药品名称、规格、作用等，进一步完善用药信息',
+                hintText: '选填，比如疗愈名称、规格、作用等，进一步完善疗愈信息',
                 hintStyle:
                     TextStyle(color: Color(0xFFBBBBBB), fontSize: 14),
                 border: InputBorder.none,

@@ -6,6 +6,8 @@ class AppData {
   final List<DiaperEntry> diaperEntries;
   final List<SolidFoodEntry> solidFoodEntries;
   final List<SleepEntry> sleepEntries;
+  final List<GenericEntry> genericEntries;
+  final List<CustomEntry> customEntries;
 
   AppData({
     List<FeedingEntry>? feedingEntries,
@@ -13,11 +15,15 @@ class AppData {
     List<DiaperEntry>? diaperEntries,
     List<SolidFoodEntry>? solidFoodEntries,
     List<SleepEntry>? sleepEntries,
+    List<GenericEntry>? genericEntries,
+    List<CustomEntry>? customEntries,
   })  : feedingEntries = feedingEntries ?? [],
         medEntries = medEntries ?? [],
         diaperEntries = diaperEntries ?? [],
         solidFoodEntries = solidFoodEntries ?? [],
-        sleepEntries = sleepEntries ?? [];
+        sleepEntries = sleepEntries ?? [],
+        genericEntries = genericEntries ?? [],
+        customEntries = customEntries ?? [];
 
   Map<String, dynamic> toJson() => {
         'feedingEntries': feedingEntries.map((e) => e.toJson()).toList(),
@@ -25,6 +31,8 @@ class AppData {
         'diaperEntries': diaperEntries.map((e) => e.toJson()).toList(),
         'solidFoodEntries': solidFoodEntries.map((e) => e.toJson()).toList(),
         'sleepEntries': sleepEntries.map((e) => e.toJson()).toList(),
+        'genericEntries': genericEntries.map((e) => e.toJson()).toList(),
+        'customEntries': customEntries.map((e) => e.toJson()).toList(),
       };
 
   factory AppData.fromJson(Map<String, dynamic> json) => AppData(
@@ -43,6 +51,12 @@ class AppData {
         sleepEntries: (json['sleepEntries'] as List? ?? [])
             .map((e) => SleepEntry.fromJson(e as Map<String, dynamic>))
             .toList(),
+        genericEntries: (json['genericEntries'] as List? ?? [])
+            .map((e) => GenericEntry.fromJson(e as Map<String, dynamic>))
+            .toList(),
+        customEntries: (json['customEntries'] as List? ?? [])
+            .map((e) => CustomEntry.fromJson(e as Map<String, dynamic>))
+            .toList(),
       );
 
   AppData copyWith({
@@ -51,6 +65,8 @@ class AppData {
     List<DiaperEntry>? diaperEntries,
     List<SolidFoodEntry>? solidFoodEntries,
     List<SleepEntry>? sleepEntries,
+    List<GenericEntry>? genericEntries,
+    List<CustomEntry>? customEntries,
   }) =>
       AppData(
         feedingEntries: feedingEntries ?? this.feedingEntries,
@@ -58,6 +74,8 @@ class AppData {
         diaperEntries: diaperEntries ?? this.diaperEntries,
         solidFoodEntries: solidFoodEntries ?? this.solidFoodEntries,
         sleepEntries: sleepEntries ?? this.sleepEntries,
+        genericEntries: genericEntries ?? this.genericEntries,
+        customEntries: customEntries ?? this.customEntries,
       );
 
   AppData addFeeding(FeedingEntry e) =>
@@ -69,6 +87,10 @@ class AppData {
       copyWith(solidFoodEntries: [...solidFoodEntries, e]);
   AppData addSleep(SleepEntry e) =>
       copyWith(sleepEntries: [...sleepEntries, e]);
+  AppData addGeneric(GenericEntry e) =>
+      copyWith(genericEntries: [...genericEntries, e]);
+  AppData addCustom(CustomEntry e) =>
+      copyWith(customEntries: [...customEntries, e]);
 
   AppData removeFeeding(String id) => copyWith(
       feedingEntries: feedingEntries.where((e) => e.id != id).toList());
@@ -80,4 +102,17 @@ class AppData {
       solidFoodEntries: solidFoodEntries.where((e) => e.id != id).toList());
   AppData removeSleep(String id) =>
       copyWith(sleepEntries: sleepEntries.where((e) => e.id != id).toList());
+  AppData removeGeneric(String id) => copyWith(
+      genericEntries: genericEntries.where((e) => e.id != id).toList());
+  AppData removeCustom(String id) => copyWith(
+      customEntries: customEntries.where((e) => e.id != id).toList());
+
+  AppData updateSleep(SleepEntry e) => copyWith(
+      sleepEntries: sleepEntries.map((s) => s.id == e.id ? e : s).toList());
+  AppData updateGeneric(GenericEntry e) => copyWith(
+      genericEntries:
+          genericEntries.map((s) => s.id == e.id ? e : s).toList());
+  AppData updateCustom(CustomEntry e) => copyWith(
+      customEntries:
+          customEntries.map((s) => s.id == e.id ? e : s).toList());
 }

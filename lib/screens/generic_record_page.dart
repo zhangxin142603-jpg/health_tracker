@@ -3,23 +3,22 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../models/baby_entries.dart';
 import '../providers/app_provider.dart';
-import '../l10n/app_localizations.dart';
 
 const Color _kPurple = Color(0xFF7B6CF6);
 
-class DiaperPage extends StatefulWidget {
-  final DiaperEntry? entry; // non-null = edit mode
+class GenericRecordPage extends StatefulWidget {
+  final String type;
+  final GenericEntry? entry; // non-null = edit mode
 
-  const DiaperPage({super.key, this.entry});
+  const GenericRecordPage({super.key, required this.type, this.entry});
 
   @override
-  State<DiaperPage> createState() => _DiaperPageState();
+  State<GenericRecordPage> createState() => _GenericRecordPageState();
 }
 
-class _DiaperPageState extends State<DiaperPage> {
+class _GenericRecordPageState extends State<GenericRecordPage> {
   late DateTime _startTime;
   DateTime? _endTime;
-  late String _diaperType;
   late final TextEditingController _notesCtrl;
 
   bool get _isEdit => widget.entry != null;
@@ -28,14 +27,12 @@ class _DiaperPageState extends State<DiaperPage> {
   void initState() {
     super.initState();
     if (_isEdit) {
-      _startTime = widget.entry!.timestamp;
-      _endTime = null;
-      _diaperType = widget.entry!.diaperType;
+      _startTime = widget.entry!.startTime;
+      _endTime = widget.entry!.endTime;
       _notesCtrl = TextEditingController(text: widget.entry!.notes ?? '');
     } else {
       _startTime = DateTime.now();
       _endTime = null;
-      _diaperType = 'both';
       _notesCtrl = TextEditingController();
     }
   }
@@ -75,15 +72,11 @@ class _DiaperPageState extends State<DiaperPage> {
                     _timeRow('开始时间', _startTime, _pickStartDate,
                         _pickStartTime, false),
                     _divider(),
-                    _timeRow(
-                        '结束时间', _endTime, _pickEndDate, _pickEndTime, true),
+                    _timeRow('结束时间', _endTime, _pickEndDate, _pickEndTime,
+                        true),
                   ]),
                   const SizedBox(height: 10),
-                  _diaperTypeSection(),
-                  const SizedBox(height: 10),
                   _notesSection(),
-                  const SizedBox(height: 10),
-                  _photoSection(),
                 ],
               ),
             ),
@@ -98,7 +91,7 @@ class _DiaperPageState extends State<DiaperPage> {
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
-        title: Text(AppLocalizations.of(context).diaperPageTitle,
+        title: Text(widget.type,
             style: const TextStyle(
                 fontSize: 17,
                 fontWeight: FontWeight.w600,
@@ -164,134 +157,31 @@ class _DiaperPageState extends State<DiaperPage> {
         ),
       );
 
-  Widget _diaperTypeSection() => Container(
-        color: Colors.white,
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(AppLocalizations.of(context).diaperStatusLabel,
-                style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.black)),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                _diaperOption('wet', '💧', AppLocalizations.of(context).pee),
-                const SizedBox(width: 24),
-                _diaperOption('poop', '💩', AppLocalizations.of(context).poop),
-                const SizedBox(width: 24),
-                _diaperOption('both', '💧💩', AppLocalizations.of(context).poopPee),
-              ],
-            ),
-          ],
-        ),
-      );
-
-  Widget _diaperOption(String type, String emoji, String label) {
-    final selected = _diaperType == type;
-    return GestureDetector(
-      onTap: () => setState(() => _diaperType = type),
-      child: Column(
-        children: [
-          Container(
-            width: 68,
-            height: 68,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: selected
-                  ? const Color(0xFFFFF0F0)
-                  : const Color(0xFFF5F5F5),
-              border: Border.all(
-                color: selected ? Colors.pinkAccent : Colors.transparent,
-                width: 2,
-              ),
-            ),
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                Text(emoji, style: const TextStyle(fontSize: 28)),
-                if (selected)
-                  Positioned(
-                    right: 2,
-                    bottom: 2,
-                    child: Container(
-                      width: 20,
-                      height: 20,
-                      decoration: const BoxDecoration(
-                        color: Colors.pinkAccent,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.check,
-                          size: 13, color: Colors.white),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(label,
-              style: const TextStyle(
-                  fontSize: 13, color: Color(0xFF555555))),
-        ],
-      ),
-    );
-  }
-
   Widget _notesSection() => Container(
         color: Colors.white,
         padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(AppLocalizations.of(context).notes,
-                style: const TextStyle(
+            const Text('备注',
+                style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
                     color: Colors.black)),
             const SizedBox(height: 10),
             TextField(
               controller: _notesCtrl,
-              maxLines: 4,
+              maxLines: 5,
               maxLength: 200,
               style: const TextStyle(fontSize: 14),
-              decoration: InputDecoration(
-                hintText: AppLocalizations.of(context).diaperNotesHint,
-                hintStyle:
-                    const TextStyle(color: Color(0xFFBBBBBB), fontSize: 14),
+              decoration: const InputDecoration(
+                hintText: '选填，',
+                hintStyle: TextStyle(color: Color(0xFFBBBBBB), fontSize: 14),
                 border: InputBorder.none,
                 counterStyle: TextStyle(color: Color(0xFFBBBBBB)),
               ),
             ),
           ],
-        ),
-      );
-
-  Widget _photoSection() => Container(
-        color: Colors.white,
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-        child: GestureDetector(
-          onTap: () {}, // placeholder for photo picker
-          child: Container(
-            width: 100,
-            height: 100,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF5F5F5),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.add_circle_outline,
-                    size: 28, color: Color(0xFF999999)),
-                SizedBox(height: 6),
-                Text('上传照片',
-                    style:
-                        TextStyle(fontSize: 12, color: Color(0xFF999999))),
-              ],
-            ),
-          ),
         ),
       );
 
@@ -384,35 +274,33 @@ class _DiaperPageState extends State<DiaperPage> {
         context: context, initialTime: TimeOfDay.fromDateTime(initial));
     if (p != null) {
       final prev = _endTime ?? DateTime.now();
-      setState(() => _endTime =
-          DateTime(prev.year, prev.month, prev.day, p.hour, p.minute));
+      setState(() => _endTime = DateTime(
+          prev.year, prev.month, prev.day, p.hour, p.minute));
     }
   }
 
   void _save() {
     final provider = Provider.of<AppProvider>(context, listen: false);
-    final entry = DiaperEntry(
+    final entry = GenericEntry(
       id: _isEdit
           ? widget.entry!.id
           : DateTime.now().millisecondsSinceEpoch.toString(),
-      timestamp: _startTime,
-      diaperType: _diaperType,
-      symptoms: const [],
+      type: widget.type,
+      startTime: _startTime,
+      endTime: _endTime,
       notes: _notesCtrl.text.trim().isEmpty ? null : _notesCtrl.text.trim(),
     );
     if (_isEdit) {
-      // For diaper, no update method yet — remove + add
-      provider.removeEntry('diaper', widget.entry!.id);
-      provider.addDiaper(entry);
+      provider.updateGeneric(entry);
     } else {
-      provider.addDiaper(entry);
+      provider.addGeneric(entry);
     }
     Navigator.pop(context);
   }
 
   void _delete() {
     Provider.of<AppProvider>(context, listen: false)
-        .removeEntry('diaper', widget.entry!.id);
+        .removeEntry('generic', widget.entry!.id);
     Navigator.pop(context);
   }
 }

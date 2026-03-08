@@ -16,6 +16,8 @@ class AppProvider with ChangeNotifier {
   List<DiaperEntry> get diaperEntries => _data.diaperEntries;
   List<SolidFoodEntry> get solidFoodEntries => _data.solidFoodEntries;
   List<SleepEntry> get sleepEntries => _data.sleepEntries;
+  List<GenericEntry> get genericEntries => _data.genericEntries;
+  List<CustomEntry> get customEntries => _data.customEntries;
 
   AppProvider() {
     _loadData();
@@ -69,6 +71,36 @@ class AppProvider with ChangeNotifier {
     await _save();
   }
 
+  Future<void> addGeneric(GenericEntry e) async {
+    _data = _data.addGeneric(e);
+    notifyListeners();
+    await _save();
+  }
+
+  Future<void> addCustom(CustomEntry e) async {
+    _data = _data.addCustom(e);
+    notifyListeners();
+    await _save();
+  }
+
+  Future<void> updateSleep(SleepEntry e) async {
+    _data = _data.updateSleep(e);
+    notifyListeners();
+    await _save();
+  }
+
+  Future<void> updateGeneric(GenericEntry e) async {
+    _data = _data.updateGeneric(e);
+    notifyListeners();
+    await _save();
+  }
+
+  Future<void> updateCustom(CustomEntry e) async {
+    _data = _data.updateCustom(e);
+    notifyListeners();
+    await _save();
+  }
+
   Future<void> removeEntry(String type, String id) async {
     switch (type) {
       case 'feeding':
@@ -85,6 +117,12 @@ class AppProvider with ChangeNotifier {
         break;
       case 'sleep':
         _data = _data.removeSleep(id);
+        break;
+      case 'generic':
+        _data = _data.removeGeneric(id);
+        break;
+      case 'custom':
+        _data = _data.removeCustom(id);
         break;
     }
     notifyListeners();

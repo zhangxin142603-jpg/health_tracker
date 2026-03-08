@@ -185,3 +185,72 @@ class SleepEntry {
         notes: json['notes'] as String?,
       );
 }
+
+/// type: '睡眠' | '锻炼' | '觉察' | '疗愈' | '真我'
+class GenericEntry {
+  final String id;
+  final String type;
+  final DateTime startTime;
+  final DateTime? endTime;
+  final String? notes;
+
+  const GenericEntry({
+    required this.id,
+    required this.type,
+    required this.startTime,
+    this.endTime,
+    this.notes,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'type': type,
+        'startTime': startTime.toIso8601String(),
+        'endTime': endTime?.toIso8601String(),
+        'notes': notes,
+      };
+
+  factory GenericEntry.fromJson(Map<String, dynamic> json) => GenericEntry(
+        id: json['id'] as String,
+        type: json['type'] as String? ?? '自定义',
+        startTime: DateTime.parse(json['startTime'] as String),
+        endTime: json['endTime'] != null
+            ? DateTime.parse(json['endTime'] as String)
+            : null,
+        notes: json['notes'] as String?,
+      );
+}
+
+class CustomEntry {
+  final String id;
+  final DateTime startTime;
+  final DateTime? endTime;
+  final String eventName;
+  final String? notes;
+
+  const CustomEntry({
+    required this.id,
+    required this.startTime,
+    this.endTime,
+    required this.eventName,
+    this.notes,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'startTime': startTime.toIso8601String(),
+        'endTime': endTime?.toIso8601String(),
+        'eventName': eventName,
+        'notes': notes,
+      };
+
+  factory CustomEntry.fromJson(Map<String, dynamic> json) => CustomEntry(
+        id: json['id'] as String,
+        startTime: DateTime.parse(json['startTime'] as String),
+        endTime: json['endTime'] != null
+            ? DateTime.parse(json['endTime'] as String)
+            : null,
+        eventName: json['eventName'] as String? ?? '',
+        notes: json['notes'] as String?,
+      );
+}
