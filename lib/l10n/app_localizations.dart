@@ -57,7 +57,6 @@ class AppLocalizations {
   String get commonMedications => AppStrings.commonMedications;
   String get enterMedicationName => AppStrings.enterMedicationName;
   String get selectDosage => AppStrings.selectDosage;
-  String get uploadPhoto => AppStrings.uploadPhoto;
   List<String> get commonMedicationList => AppStrings.commonMedicationList;
 
   // ==================== 尿布模块 ====================

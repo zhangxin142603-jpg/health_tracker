@@ -14,6 +14,11 @@ class AppEmojis {
   // 保持原样的功能Emoji
   static const String pee = '💧';          // 尿
   static const String poop = '💩';         // 便
-  static const String both = '💧💩';       // 尿便
+  static const String both = '🚽';       // 尿便
   static const String spoon = '🥄';        // 勺子
+
+  // 喂养类型Emoji
+  static const String water = '🥛';        // 喂水
+  static const String food = '🍚';         // 喂食
+  static const String waterAndFood = '🍲'; // 喂水+喂食
 }

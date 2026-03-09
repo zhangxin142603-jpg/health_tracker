@@ -2,7 +2,7 @@
 /// 按功能模块组织，便于管理和查找
 class AppStrings {
   // ==================== 应用通用 ====================
-  static const String appTitle = '身心记录';
+  static const String appTitle = '完美状态';
   static const String noRecords = '暂无记录';
   static const String clickToAdd = '点击下方按钮添加记录';
   static const String todayNoRecords = '今天暂无记录';
@@ -53,7 +53,6 @@ class AppStrings {
   static const String medication = '觉察';
   static const String medicationRecord = '觉察记录';
   static const String medicationCount = '觉察 {count}次';
-  static const String uploadPhoto = '上传照片';
   static const String recordMedication = '记录疗愈';
   static const String add = '添加';
   static const String manage = '管理';
@@ -101,7 +100,7 @@ class AppStrings {
   static const String startTime = '开始时间';
   static const String endTime = '结束时间';
   static const String sleepPageTitle = '睡眠';
-  static const String sleepNotesHint = '选填等';
+  static const String sleepNotesHint = '选填';
 
   // ==================== 辅食模块 ====================
   static const String solidFood = '辅食';

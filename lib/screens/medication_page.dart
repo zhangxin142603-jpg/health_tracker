@@ -294,33 +294,11 @@ class _MedicationPageState extends State<MedicationPage> {
               maxLength: 200,
               style: const TextStyle(fontSize: 14),
               decoration: const InputDecoration(
-                hintText: '选填，比如疗愈名称、规格、作用等，进一步完善疗愈信息',
+                hintText: '选填',
                 hintStyle:
                     TextStyle(color: Color(0xFFBBBBBB), fontSize: 14),
                 border: InputBorder.none,
                 counterStyle: TextStyle(color: Color(0xFFBBBBBB)),
-              ),
-            ),
-            const SizedBox(height: 12),
-            // Photo upload placeholder
-            Container(
-              width: 88,
-              height: 88,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF5F5F5),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFFDDDDDD)),
-              ),
-              child: const Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.add_circle_outline,
-                      color: Color(0xFFBBBBBB), size: 26),
-                  SizedBox(height: 4),
-                  Text('上传照片',
-                      style: TextStyle(
-                          fontSize: 12, color: Color(0xFFBBBBBB))),
-                ],
               ),
             ),
           ],

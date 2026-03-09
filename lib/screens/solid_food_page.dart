@@ -370,7 +370,7 @@ class _SolidFoodPageState extends State<SolidFoodPage> {
               maxLines: 4,
               style: const TextStyle(fontSize: 14),
               decoration: const InputDecoration(
-                hintText: '选填，比如新添加的食物名称、是否过敏等',
+                hintText: '选填',
                 hintStyle:
                     TextStyle(color: Color(0xFFBBBBBB), fontSize: 14),
                 border: InputBorder.none,

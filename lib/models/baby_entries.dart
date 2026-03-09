@@ -2,12 +2,14 @@ class FeedingEntry {
   final String id;
   final DateTime timestamp;
   final int amountMl;
+  final String milkSource; // '喂水' | '喂食' | '喂食+喂水'
   final String? notes;
 
   const FeedingEntry({
     required this.id,
     required this.timestamp,
     required this.amountMl,
+    this.milkSource = '喂水',
     this.notes,
   });
 
@@ -15,6 +17,7 @@ class FeedingEntry {
         'id': id,
         'timestamp': timestamp.toIso8601String(),
         'amountMl': amountMl,
+        'milkSource': milkSource,
         'notes': notes,
       };
 
@@ -22,6 +25,7 @@ class FeedingEntry {
         id: json['id'] as String,
         timestamp: DateTime.parse(json['timestamp'] as String),
         amountMl: (json['amountMl'] as num).toInt(),
+        milkSource: json['milkSource'] as String? ?? '喂水',
         notes: json['notes'] as String?,
       );
 }

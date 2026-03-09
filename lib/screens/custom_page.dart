@@ -84,8 +84,6 @@ class _CustomPageState extends State<CustomPage> {
                   _eventNameSection(),
                   const SizedBox(height: 10),
                   _notesSection(),
-                  const SizedBox(height: 10),
-                  _photoSection(),
                 ],
               ),
             ),
@@ -211,7 +209,7 @@ class _CustomPageState extends State<CustomPage> {
               maxLength: 200,
               style: const TextStyle(fontSize: 14),
               decoration: const InputDecoration(
-                hintText: '选填，可随时随地记录宝宝的点滴日常，比如：给宝宝喂水、拍嗝、洗澡、抚触按摩、做早教游戏等',
+                hintText: '选填',
                 hintStyle: TextStyle(color: Color(0xFFBBBBBB), fontSize: 14),
                 border: InputBorder.none,
                 counterStyle: TextStyle(color: Color(0xFFBBBBBB)),
@@ -221,32 +219,6 @@ class _CustomPageState extends State<CustomPage> {
         ),
       );
 
-  Widget _photoSection() => Container(
-        color: Colors.white,
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-        child: GestureDetector(
-          onTap: () {}, // placeholder for photo picker
-          child: Container(
-            width: 100,
-            height: 100,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF5F5F5),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.add_circle_outline,
-                    size: 28, color: Color(0xFF999999)),
-                SizedBox(height: 6),
-                Text('上传照片',
-                    style:
-                        TextStyle(fontSize: 12, color: Color(0xFF999999))),
-              ],
-            ),
-          ),
-        ),
-      );
 
   Widget _saveBtn() => Container(
         color: const Color(0xFFF5F5F5),

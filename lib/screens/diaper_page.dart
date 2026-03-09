@@ -36,7 +36,7 @@ class _DiaperPageState extends State<DiaperPage> {
     } else {
       _startTime = DateTime.now();
       _endTime = null;
-      _diaperType = 'both';
+      _diaperType = 'wet';
       _notesCtrl = TextEditingController();
     }
   }
@@ -83,8 +83,6 @@ class _DiaperPageState extends State<DiaperPage> {
                   _diaperTypeSection(),
                   const SizedBox(height: 10),
                   _notesSection(),
-                  const SizedBox(height: 10),
-                  _photoSection(),
                 ],
               ),
             ),
@@ -269,32 +267,6 @@ class _DiaperPageState extends State<DiaperPage> {
         ),
       );
 
-  Widget _photoSection() => Container(
-        color: Colors.white,
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-        child: GestureDetector(
-          onTap: () {}, // placeholder for photo picker
-          child: Container(
-            width: 100,
-            height: 100,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF5F5F5),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.add_circle_outline,
-                    size: 28, color: Color(0xFF999999)),
-                SizedBox(height: 6),
-                Text('上传照片',
-                    style:
-                        TextStyle(fontSize: 12, color: Color(0xFF999999))),
-              ],
-            ),
-          ),
-        ),
-      );
 
   Widget _saveBtn() => Container(
         color: const Color(0xFFF5F5F5),

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../models/baby_entries.dart';
 import '../providers/app_provider.dart';
 import '../l10n/app_localizations.dart';
+import '../constants/emojis.dart';
 
 const Color _kPurple = Color(0xFF7B6CF6);
 
@@ -26,9 +27,9 @@ class _FeedingPageState extends State<FeedingPage> {
   bool get _isEdit => widget.entry != null;
 
   static const _milkSources = [
-    _MilkOption('喂水', Color(0xFF4CAF50)),
-    _MilkOption('喂食', Color(0xFFFF9800)),
-    _MilkOption('喂食+喂水', Color(0xFF5B9BD5)),
+    _MilkOption('喂水', Color(0xFF4CAF50), AppEmojis.water),
+    _MilkOption('喂食', Color(0xFFFF9800), AppEmojis.food),
+    _MilkOption('喂食+喂水', Color(0xFF5B9BD5), AppEmojis.waterAndFood),
   ];
 
   @override
@@ -38,7 +39,7 @@ class _FeedingPageState extends State<FeedingPage> {
       _startTime = widget.entry!.timestamp;
       _endTime = null;
       _amount = widget.entry!.amountMl;
-      _milkSource = '喂水';
+      _milkSource = widget.entry!.milkSource ?? '喂水';
       _notesCtrl = TextEditingController(text: widget.entry!.notes ?? '');
     } else {
       _startTime = DateTime.now();
@@ -69,6 +70,26 @@ class _FeedingPageState extends State<FeedingPage> {
     return DateFormat('HH:mm').format(dt);
   }
 
+  String _getAmountLabel() {
+    switch (_milkSource) {
+      case '喂食':
+        return '食量';
+      case '喂食+喂水':
+        return '总量';
+      default: // '喂水'
+        return '水量';
+    }
+  }
+
+  String _getUnit() {
+    switch (_milkSource) {
+      case '喂食':
+        return 'g';
+      default: // '喂水', '喂食+喂水'
+        return 'mL';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -93,8 +114,6 @@ class _FeedingPageState extends State<FeedingPage> {
                   _sectionCard([_amountRow()]),
                   const SizedBox(height: 10),
                   _notesSection(),
-                  const SizedBox(height: 10),
-                  _photoSection(),
                 ],
               ),
             ),
@@ -216,35 +235,36 @@ class _FeedingPageState extends State<FeedingPage> {
                 width: 2,
               ),
             ),
-            child: selected
-                ? Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Container(
-                        width: 64,
-                        height: 64,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: opt.color.withOpacity(0.7),
-                        ),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                if (selected)
+                  Container(
+                    width: 64,
+                    height: 64,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: opt.color.withOpacity(0.7),
+                    ),
+                  ),
+                Text(opt.emoji, style: const TextStyle(fontSize: 28)),
+                if (selected)
+                  Positioned(
+                    right: 2,
+                    bottom: 2,
+                    child: Container(
+                      width: 20,
+                      height: 20,
+                      decoration: const BoxDecoration(
+                        color: Colors.pinkAccent,
+                        shape: BoxShape.circle,
                       ),
-                      Positioned(
-                        right: 2,
-                        bottom: 2,
-                        child: Container(
-                          width: 20,
-                          height: 20,
-                          decoration: const BoxDecoration(
-                            color: Colors.pinkAccent,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.check,
-                              size: 13, color: Colors.white),
-                        ),
-                      ),
-                    ],
-                  )
-                : null,
+                      child: const Icon(Icons.check,
+                          size: 13, color: Colors.white),
+                    ),
+                  ),
+              ],
+            ),
           ),
           const SizedBox(height: 8),
           Text(opt.label,
@@ -261,10 +281,10 @@ class _FeedingPageState extends State<FeedingPage> {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           child: Row(
             children: [
-              Text(AppLocalizations.of(context).milkAmountLabel,
+              Text(_getAmountLabel(),
                   style: const TextStyle(fontSize: 16, color: Colors.black)),
               const Spacer(),
-              Text('$_amount mL',
+              Text('$_amount ${_getUnit()}',
                   style: const TextStyle(
                       fontSize: 16, color: Color(0xFF999999))),
               const SizedBox(width: 4),
@@ -304,32 +324,6 @@ class _FeedingPageState extends State<FeedingPage> {
         ),
       );
 
-  Widget _photoSection() => Container(
-        color: Colors.white,
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-        child: GestureDetector(
-          onTap: () {}, // placeholder for photo picker
-          child: Container(
-            width: 100,
-            height: 100,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF5F5F5),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.add_circle_outline,
-                    size: 28, color: Color(0xFF999999)),
-                SizedBox(height: 6),
-                Text('上传照片',
-                    style:
-                        TextStyle(fontSize: 12, color: Color(0xFF999999))),
-              ],
-            ),
-          ),
-        ),
-      );
 
   Widget _saveBtn() => Container(
         color: const Color(0xFFF5F5F5),
@@ -428,7 +422,7 @@ class _FeedingPageState extends State<FeedingPage> {
   Future<void> _pickAmount() async {
     final result = await showDialog<int>(
       context: context,
-      builder: (_) => _AmountDialog(initial: _amount),
+      builder: (_) => _AmountDialog(initial: _amount, milkSource: _milkSource),
     );
     if (result != null) setState(() => _amount = result);
   }
@@ -441,6 +435,7 @@ class _FeedingPageState extends State<FeedingPage> {
           : DateTime.now().millisecondsSinceEpoch.toString(),
       timestamp: _startTime,
       amountMl: _amount,
+      milkSource: _milkSource,
       notes: _notesCtrl.text.trim().isEmpty ? null : _notesCtrl.text.trim(),
     );
     if (_isEdit) {
@@ -462,12 +457,14 @@ class _FeedingPageState extends State<FeedingPage> {
 class _MilkOption {
   final String label;
   final Color color;
-  const _MilkOption(this.label, this.color);
+  final String emoji;
+  const _MilkOption(this.label, this.color, this.emoji);
 }
 
 class _AmountDialog extends StatefulWidget {
   final int initial;
-  const _AmountDialog({required this.initial});
+  final String milkSource;
+  const _AmountDialog({required this.initial, required this.milkSource});
 
   @override
   State<_AmountDialog> createState() => _AmountDialogState();
@@ -476,6 +473,37 @@ class _AmountDialog extends StatefulWidget {
 class _AmountDialogState extends State<_AmountDialog> {
   late final _ctrl = TextEditingController(text: widget.initial.toString());
   final _presets = [60, 90, 120, 150, 180, 210, 240, 270, 300, 400, 500];
+
+  String _getDialogTitle() {
+    switch (widget.milkSource) {
+      case '喂食':
+        return '食量选择';
+      case '喂食+喂水':
+        return '总量选择';
+      default: // '喂水'
+        return '水量选择';
+    }
+  }
+
+  String _getCustomLabel() {
+    switch (widget.milkSource) {
+      case '喂食':
+        return '自定义 (g)';
+      case '喂食+喂水':
+        return '自定义 (mL)';
+      default: // '喂水'
+        return '自定义 (mL)';
+    }
+  }
+
+  String _getUnit() {
+    switch (widget.milkSource) {
+      case '喂食':
+        return 'g';
+      default: // '喂水', '喂食+喂水'
+        return 'mL';
+    }
+  }
 
   @override
   void dispose() {
@@ -487,7 +515,7 @@ class _AmountDialogState extends State<_AmountDialog> {
   Widget build(BuildContext context) {
     final cur = int.tryParse(_ctrl.text) ?? widget.initial;
     return AlertDialog(
-      title: const Text('水量选择'),
+      title: Text(_getDialogTitle()),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       content: Column(
         mainAxisSize: MainAxisSize.min,
@@ -511,7 +539,7 @@ class _AmountDialogState extends State<_AmountDialog> {
                         color: sel ? _kPurple : Colors.transparent),
                   ),
                   child: Text(
-                    '$p mL',
+                    '$p ${_getUnit()}',
                     style: TextStyle(
                       color: sel ? _kPurple : Colors.black87,
                       fontSize: 13,
@@ -527,7 +555,7 @@ class _AmountDialogState extends State<_AmountDialog> {
             keyboardType: TextInputType.number,
             onChanged: (_) => setState(() {}),
             decoration: InputDecoration(
-              labelText: '自定义 mL',
+              labelText: _getCustomLabel(),
               border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10)),
               contentPadding: const EdgeInsets.symmetric(

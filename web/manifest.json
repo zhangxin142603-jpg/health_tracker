@@ -1,11 +1,11 @@
 {
-    "name": "health_tracker",
-    "short_name": "health_tracker",
+    "name": "完美状态",
+    "short_name": "完美状态",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "完美状态 - 身心健康记录应用",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

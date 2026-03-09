@@ -175,7 +175,7 @@ class _GenericRecordPageState extends State<GenericRecordPage> {
               maxLength: 200,
               style: const TextStyle(fontSize: 14),
               decoration: const InputDecoration(
-                hintText: '选填，',
+                hintText: '选填',
                 hintStyle: TextStyle(color: Color(0xFFBBBBBB), fontSize: 14),
                 border: InputBorder.none,
                 counterStyle: TextStyle(color: Color(0xFFBBBBBB)),

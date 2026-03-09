@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'providers/app_provider.dart';
 import 'models/baby_entries.dart';
 import 'screens/feeding_page.dart';
@@ -12,7 +14,10 @@ import 'l10n/app_localizations.dart';
 import 'constants/emojis.dart';
 
 void main() {
-  runApp(const BabyTrackerApp());
+  WidgetsFlutterBinding.ensureInitialized();
+  initializeDateFormatting('zh_CN', null).then((_) {
+    runApp(const BabyTrackerApp());
+  });
 }
 
 const Color kPrimary = Color(0xFF7B6CF6);
@@ -32,6 +37,15 @@ class BabyTrackerApp extends StatelessWidget {
           useMaterial3: true,
           fontFamily: 'PingFang SC',
         ),
+        locale: const Locale('zh', 'CN'),
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [
+          Locale('zh', 'CN'), // 简体中文
+        ],
         home: const HomePage(),
         debugShowCheckedModeBanner: false,
       ),
@@ -72,6 +86,13 @@ class _HomePageState extends State<HomePage> {
       dt.year == _selectedDate.year &&
       dt.month == _selectedDate.month &&
       dt.day == _selectedDate.day;
+
+  bool _isToday() {
+    final now = DateTime.now();
+    return now.year == _selectedDate.year &&
+        now.month == _selectedDate.month &&
+        now.day == _selectedDate.day;
+  }
 
   List<_Entry> _buildEntries(AppProvider p) {
     final all = <_Entry>[
@@ -202,11 +223,20 @@ class _HomePageState extends State<HomePage> {
                   color: Colors.white, size: 22),
               onPressed: _pickDate,
             ),
-            IconButton(
-              icon: const Icon(Icons.bar_chart_rounded,
-                  color: Colors.white, size: 22),
-              onPressed: () {},
-            ),
+            _isToday()
+                ? Padding(
+                    padding: const EdgeInsets.only(right: 14),
+                    child: Text('今日',
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500)),
+                  )
+                : IconButton(
+                    icon: const Icon(Icons.bar_chart_rounded,
+                        color: Colors.white, size: 22),
+                    onPressed: () {},
+                  ),
           ],
         ),
       ),
@@ -313,10 +343,27 @@ class _HomePageState extends State<HomePage> {
           AppLocalizations.of(context).timesLabel(feedList.length),
           AppLocalizations.of(context).totalMlLabel(totalMl),
           isParent: true));
-      rows.add(_summaryRow('  ${AppLocalizations.of(context).feedingPageTitle}',
-          AppLocalizations.of(context).timesLabel(feedList.length),
-          '${totalMl}mL',
-          isParent: false));
+
+      // 统计喂水和喂食次数
+      int waterCount = 0;
+      int foodCount = 0;
+      for (final e in feedList) {
+        if (e.milkSource == '喂水' || e.milkSource == '喂食+喂水') {
+          waterCount++;
+        }
+        if (e.milkSource == '喂食' || e.milkSource == '喂食+喂水') {
+          foodCount++;
+        }
+      }
+
+      if (waterCount > 0) {
+        rows.add(_summaryRow('  ${AppLocalizations.of(context).breastMilkOption}',
+          '${waterCount}次', '', isParent: false));
+      }
+      if (foodCount > 0) {
+        rows.add(_summaryRow('  ${AppLocalizations.of(context).formulaMilkOption}',
+          '${foodCount}次', '', isParent: false));
+      }
     }
 
     // Diaper
@@ -462,74 +509,64 @@ class _HomePageState extends State<HomePage> {
       ago = DateFormat('MM-dd').format(entry.timestamp);
     }
 
-    return Dismissible(
-      key: Key('${entry.type}_${entry.id}'),
-      direction: DismissDirection.endToStart,
-      background: Container(
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20, bottom: 12),
-        child: const Icon(Icons.delete_outline, color: Colors.red, size: 26),
-      ),
-      onDismissed: (_) => provider.removeEntry(entry.type, entry.id),
-      child: IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Time column
-            SizedBox(
-              width: 68,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    DateFormat('HH:mm').format(entry.timestamp),
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF333333),
-                    ),
-                  ),
-                  Text(
-                    ago,
-                    style: const TextStyle(
-                        fontSize: 10, color: Color(0xFFAAAAAA)),
-                    textAlign: TextAlign.right,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 10),
-            // Dot + line
-            Column(
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Time column
+          SizedBox(
+            width: 68,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Container(
-                  width: 10,
-                  height: 10,
-                  margin: const EdgeInsets.only(top: 5),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    border:
-                        Border.all(color: const Color(0xFFCCCCCC), width: 2),
+                Text(
+                  DateFormat('HH:mm').format(entry.timestamp),
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF333333),
                   ),
                 ),
-                if (!isLast)
-                  Expanded(
-                    child: Container(
-                        width: 1.5, color: const Color(0xFFE0E0E0)),
-                  ),
+                Text(
+                  ago,
+                  style: const TextStyle(
+                      fontSize: 10, color: Color(0xFFAAAAAA)),
+                  textAlign: TextAlign.right,
+                ),
               ],
             ),
-            const SizedBox(width: 10),
-            // Card
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: _buildCard(context, entry),
+          ),
+          const SizedBox(width: 10),
+          // Dot + line
+          Column(
+            children: [
+              Container(
+                width: 10,
+                height: 10,
+                margin: const EdgeInsets.only(top: 5),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  border:
+                      Border.all(color: const Color(0xFFCCCCCC), width: 2),
+                ),
               ),
+              if (!isLast)
+                Expanded(
+                  child: Container(
+                      width: 1.5, color: const Color(0xFFE0E0E0)),
+                ),
+            ],
+          ),
+          const SizedBox(width: 10),
+          // Card
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _buildCard(context, entry),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -538,11 +575,21 @@ class _HomePageState extends State<HomePage> {
     switch (entry.type) {
       case 'feeding':
         final e = entry.data as FeedingEntry;
+        final emoji = e.milkSource == '喂食'
+            ? AppEmojis.food
+            : e.milkSource == '喂食+喂水'
+                ? AppEmojis.waterAndFood
+                : AppEmojis.water;
+        final emojiColor = e.milkSource == '喂食'
+            ? const Color(0xFFFFF3E0)
+            : e.milkSource == '喂食+喂水'
+                ? const Color(0xFFF0EEFF)
+                : const Color(0xFFE3F0FC);
         return _TimelineCard(
-          emoji: AppEmojis.feeding,
-          emojiColor: const Color(0xFFE3F0FC),
-          title: '投喂',
-          trailing: '${e.amountMl}mL',
+          emoji: emoji,
+          emojiColor: emojiColor,
+          title: e.milkSource,
+          trailing: '${e.amountMl}${e.milkSource == '喂食' ? 'g' : 'mL'}',
           onTap: () => _goto(FeedingPage(entry: e)),
         );
       case 'diaper':
