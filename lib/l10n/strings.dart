@@ -3,7 +3,7 @@
 class AppStrings {
   // ==================== 应用通用 ====================
   static const String appTitle = '完美状态';
-  static const String noRecords = '暂无记录';
+  static const String noRecords = '开始记录';
   static const String clickToAdd = '点击下方按钮添加记录';
   static const String todayNoRecords = '今天暂无记录';
   static const String today = '今天';

@@ -10,6 +10,8 @@ import 'screens/diaper_page.dart';
 import 'screens/sleep_page.dart';
 import 'screens/generic_record_page.dart';
 import 'screens/custom_page.dart';
+import 'screens/medication_page.dart';
+import 'screens/solid_food_page.dart';
 import 'l10n/app_localizations.dart';
 import 'constants/emojis.dart';
 
@@ -116,6 +118,14 @@ class _HomePageState extends State<HomePage> {
           .where((e) => _sameDay(e.startTime))
           .map((e) => _Entry(
               timestamp: e.startTime, type: 'custom', id: e.id, data: e)),
+      ...p.medEntries
+          .where((e) => _sameDay(e.timestamp))
+          .map((e) =>
+              _Entry(timestamp: e.timestamp, type: 'med', id: e.id, data: e)),
+      ...p.solidFoodEntries
+          .where((e) => _sameDay(e.timestamp))
+          .map((e) =>
+              _Entry(timestamp: e.timestamp, type: 'solidFood', id: e.id, data: e)),
     ]..sort((a, b) => a.timestamp.compareTo(b.timestamp));
     return all;
   }
@@ -213,30 +223,28 @@ class _HomePageState extends State<HomePage> {
                     const SizedBox(width: 4),
                     const Icon(Icons.keyboard_arrow_down,
                         color: Colors.white70, size: 22),
+                    const SizedBox(width: 4),
+                    Text(
+                      _isToday() ? '今日' : '过往',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                   ],
                 ),
               ),
             ),
             // Left/Right day navigation
-            IconButton(
-              icon: const Icon(Icons.calendar_month_outlined,
-                  color: Colors.white, size: 22),
-              onPressed: _pickDate,
+            Padding(
+              padding: const EdgeInsets.only(right: 14),
+              child: IconButton(
+                icon: const Icon(Icons.calendar_month_outlined,
+                    color: Colors.white, size: 22),
+                onPressed: _pickDate,
+              ),
             ),
-            _isToday()
-                ? Padding(
-                    padding: const EdgeInsets.only(right: 14),
-                    child: Text('今日',
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500)),
-                  )
-                : IconButton(
-                    icon: const Icon(Icons.bar_chart_rounded,
-                        color: Colors.white, size: 22),
-                    onPressed: () {},
-                  ),
           ],
         ),
       ),
@@ -593,6 +601,7 @@ class _HomePageState extends State<HomePage> {
           emoji: emoji,
           emojiColor: emojiColor,
           title: e.milkSource,
+          subtitle: e.notes,
           trailing: e.milkSource == '喂食'
               ? '${e.foodAmountKcal ?? e.amountMl}kcal'
               : e.milkSource == '喂食+喂水'
@@ -613,6 +622,7 @@ class _HomePageState extends State<HomePage> {
               ? const Color(0xFFE3F0FC)
               : const Color(0xFFFFF3E0),
           title: e.typeLabel,
+          subtitle: e.notes,
           onTap: () => _goto(DiaperPage(entry: e)),
         );
       case 'sleep':
@@ -624,6 +634,7 @@ class _HomePageState extends State<HomePage> {
           emoji: AppEmojis.sleep,
           emojiColor: const Color(0xFFFFF8E1),
           title: '睡眠$endLabel',
+          subtitle: e.notes,
           trailing: e.durationText,
           onTap: () => _goto(SleepPage(entry: e)),
         );
@@ -652,6 +663,24 @@ class _HomePageState extends State<HomePage> {
           title: e.eventName.isNotEmpty ? e.eventName : '自定义',
           subtitle: e.notes,
           onTap: () => _goto(CustomPage(entry: e)),
+        );
+      case 'med':
+        final e = entry.data as MedEntry;
+        return _TimelineCard(
+          emoji: AppEmojis.healing,
+          emojiColor: const Color(0xFFFFEEF0),
+          title: '疗愈',
+          subtitle: e.notes,
+          onTap: () => _goto(MedicationPage()),
+        );
+      case 'solidFood':
+        final e = entry.data as SolidFoodEntry;
+        return _TimelineCard(
+          emoji: AppEmojis.spoon,
+          emojiColor: const Color(0xFFFFF3E0),
+          title: '辅食',
+          subtitle: e.notes,
+          onTap: () => _goto(SolidFoodPage()),
         );
       default:
         return const SizedBox.shrink();
