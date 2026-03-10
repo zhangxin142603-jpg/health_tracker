@@ -338,10 +338,14 @@ class _HomePageState extends State<HomePage> {
 
     // Feeding
     if (feedList.isNotEmpty) {
-      final totalMl = feedList.fold<int>(0, (s, e) => s + e.amountMl);
+      final totalMl = feedList.fold<int>(0, (s, e) => s + (e.waterAmountMl ?? 0));
+      final totalKcal = feedList.fold<int>(0, (s, e) => s + (e.foodAmountKcal ?? 0));
+      final extra = totalKcal > 0
+          ? '共${totalMl}mL / ${totalKcal}kcal'
+          : AppLocalizations.of(context).totalMlLabel(totalMl);
       rows.add(_summaryRow('· ${AppLocalizations.of(context).feedingSummaryLabel}',
           AppLocalizations.of(context).timesLabel(feedList.length),
-          AppLocalizations.of(context).totalMlLabel(totalMl),
+          extra,
           isParent: true));
 
       // 统计喂水和喂食次数
@@ -589,7 +593,11 @@ class _HomePageState extends State<HomePage> {
           emoji: emoji,
           emojiColor: emojiColor,
           title: e.milkSource,
-          trailing: '${e.amountMl}${e.milkSource == '喂食' ? 'g' : 'mL'}',
+          trailing: e.milkSource == '喂食'
+              ? '${e.foodAmountKcal ?? e.amountMl}kcal'
+              : e.milkSource == '喂食+喂水'
+                  ? '${e.foodAmountKcal ?? e.amountMl}kcal'
+                  : '${e.amountMl}mL',
           onTap: () => _goto(FeedingPage(entry: e)),
         );
       case 'diaper':

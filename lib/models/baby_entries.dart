@@ -3,6 +3,8 @@ class FeedingEntry {
   final DateTime timestamp;
   final int amountMl;
   final String milkSource; // '喂水' | '喂食' | '喂食+喂水'
+  final int? foodAmountKcal; // 食量（千卡），仅当 milkSource 包含喂食时有效
+  final int? waterAmountMl;  // 水量（毫升），仅当 milkSource 包含喂水时有效
   final String? notes;
 
   const FeedingEntry({
@@ -10,6 +12,8 @@ class FeedingEntry {
     required this.timestamp,
     required this.amountMl,
     this.milkSource = '喂水',
+    this.foodAmountKcal,
+    this.waterAmountMl,
     this.notes,
   });
 
@@ -18,6 +22,8 @@ class FeedingEntry {
         'timestamp': timestamp.toIso8601String(),
         'amountMl': amountMl,
         'milkSource': milkSource,
+        'foodAmountKcal': foodAmountKcal,
+        'waterAmountMl': waterAmountMl,
         'notes': notes,
       };
 
@@ -26,6 +32,8 @@ class FeedingEntry {
         timestamp: DateTime.parse(json['timestamp'] as String),
         amountMl: (json['amountMl'] as num).toInt(),
         milkSource: json['milkSource'] as String? ?? '喂水',
+        foodAmountKcal: (json['foodAmountKcal'] as num?)?.toInt(),
+        waterAmountMl: (json['waterAmountMl'] as num?)?.toInt(),
         notes: json['notes'] as String?,
       );
 }

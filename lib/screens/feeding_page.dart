@@ -20,16 +20,18 @@ class FeedingPage extends StatefulWidget {
 class _FeedingPageState extends State<FeedingPage> {
   late DateTime _startTime;
   DateTime? _endTime;
-  late int _amount;
+  late int _amount; // 当前显示的量值（根据 milkSource 可能是食量或水量）
+  late int _foodAmount; // 食量（kcal）
+  late int _waterAmount; // 水量（mL）
   late String _milkSource; // '喂水' | '喂食' | '喂食+喂水'
   late final TextEditingController _notesCtrl;
 
   bool get _isEdit => widget.entry != null;
 
   static const _milkSources = [
-    _MilkOption('喂水', Color(0xFF4CAF50), AppEmojis.water),
-    _MilkOption('喂食', Color(0xFFFF9800), AppEmojis.food),
-    _MilkOption('喂食+喂水', Color(0xFF5B9BD5), AppEmojis.waterAndFood),
+    _MilkOption('喂水', Color(0xFFF5F5F5), AppEmojis.water),
+    _MilkOption('喂食', Color(0xFFF5F5F5), AppEmojis.food),
+    _MilkOption('喂食+喂水', Color(0xFFF5F5F5), AppEmojis.waterAndFood),
   ];
 
   @override
@@ -41,12 +43,19 @@ class _FeedingPageState extends State<FeedingPage> {
       _amount = widget.entry!.amountMl;
       _milkSource = widget.entry!.milkSource ?? '喂水';
       _notesCtrl = TextEditingController(text: widget.entry!.notes ?? '');
+      // 初始化食量和水量
+      _foodAmount = widget.entry!.foodAmountKcal ??
+          (_milkSource == '喂食' ? widget.entry!.amountMl : 800);
+      _waterAmount = widget.entry!.waterAmountMl ??
+          (_milkSource == '喂水' ? widget.entry!.amountMl : 250);
     } else {
       _startTime = DateTime.now();
       _endTime = null;
       _amount = 250;
       _milkSource = '喂水';
       _notesCtrl = TextEditingController();
+      _foodAmount = 800; // 默认食量
+      _waterAmount = 250; // 默认水量
     }
   }
 
@@ -84,7 +93,7 @@ class _FeedingPageState extends State<FeedingPage> {
   String _getUnit() {
     switch (_milkSource) {
       case '喂食':
-        return 'g';
+        return 'kcal';
       default: // '喂水', '喂食+喂水'
         return 'mL';
     }
@@ -111,7 +120,7 @@ class _FeedingPageState extends State<FeedingPage> {
                   const SizedBox(height: 10),
                   _milkSourceSection(),
                   const SizedBox(height: 10),
-                  _sectionCard([_amountRow()]),
+                  _sectionCard(_amountSection()),
                   const SizedBox(height: 10),
                   _notesSection(),
                 ],
@@ -207,12 +216,13 @@ class _FeedingPageState extends State<FeedingPage> {
                     color: Colors.black)),
             const SizedBox(height: 16),
             Row(
-              children: _milkSources
-                  .map((opt) => Padding(
-                        padding: const EdgeInsets.only(right: 24),
-                        child: _milkSourceOption(opt),
-                      ))
-                  .toList(),
+              children: [
+                _milkSourceOption(_milkSources[0]),
+                const SizedBox(width: 24),
+                _milkSourceOption(_milkSources[1]),
+                const SizedBox(width: 24),
+                _milkSourceOption(_milkSources[2]),
+              ],
             ),
           ],
         ),
@@ -221,15 +231,32 @@ class _FeedingPageState extends State<FeedingPage> {
   Widget _milkSourceOption(_MilkOption opt) {
     final selected = _milkSource == opt.label;
     return GestureDetector(
-      onTap: () => setState(() => _milkSource = opt.label),
+      onTap: () => setState(() {
+            _milkSource = opt.label;
+            if (!_isEdit) {
+              if (opt.label == '喂食') {
+                _foodAmount = 800;
+                _amount = _foodAmount;
+              } else if (opt.label == '喂水') {
+                _waterAmount = 250;
+                _amount = _waterAmount;
+              } else { // 喂食+喂水
+                _foodAmount = 800;
+                _waterAmount = 250;
+                _amount = _waterAmount; // 默认显示水量，但 UI 会显示两行
+              }
+            }
+          }),
       child: Column(
         children: [
           Container(
-            width: 64,
-            height: 64,
+            width: 68,
+            height: 68,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: selected ? const Color(0xFFFFF0F0) : opt.color,
+              color: selected
+                  ? const Color(0xFFFFF0F0)
+                  : const Color(0xFFF5F5F5),
               border: Border.all(
                 color: selected ? Colors.pinkAccent : Colors.transparent,
                 width: 2,
@@ -238,15 +265,6 @@ class _FeedingPageState extends State<FeedingPage> {
             child: Stack(
               alignment: Alignment.center,
               children: [
-                if (selected)
-                  Container(
-                    width: 64,
-                    height: 64,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: opt.color.withOpacity(0.7),
-                    ),
-                  ),
                 Text(opt.emoji, style: const TextStyle(fontSize: 28)),
                 if (selected)
                   Positioned(
@@ -294,6 +312,47 @@ class _FeedingPageState extends State<FeedingPage> {
           ),
         ),
       );
+
+  Widget _amountRowWithLabel(String label, int value, String unit, VoidCallback onTap) => InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: Row(
+            children: [
+              Text(label,
+                  style: const TextStyle(fontSize: 16, color: Colors.black)),
+              const Spacer(),
+              Text('$value $unit',
+                  style: const TextStyle(
+                      fontSize: 16, color: Color(0xFF999999))),
+              const SizedBox(width: 4),
+              const Icon(Icons.chevron_right,
+                  color: Color(0xFFCCCCCC), size: 20),
+            ],
+          ),
+        ),
+      );
+
+  List<Widget> _amountSection() {
+    switch (_milkSource) {
+      case '喂食':
+        return [
+          _amountRowWithLabel('食量', _foodAmount, 'kcal', _pickFoodAmount),
+        ];
+      case '喂水':
+        return [
+          _amountRowWithLabel('水量', _waterAmount, 'mL', _pickWaterAmount),
+        ];
+      case '喂食+喂水':
+        return [
+          _amountRowWithLabel('食量', _foodAmount, 'kcal', _pickFoodAmount),
+          _divider(),
+          _amountRowWithLabel('水量', _waterAmount, 'mL', _pickWaterAmount),
+        ];
+      default:
+        return [];
+    }
+  }
 
   Widget _notesSection() => Container(
         color: Colors.white,
@@ -427,6 +486,22 @@ class _FeedingPageState extends State<FeedingPage> {
     if (result != null) setState(() => _amount = result);
   }
 
+  Future<void> _pickFoodAmount() async {
+    final result = await showDialog<int>(
+      context: context,
+      builder: (_) => _AmountDialog(initial: _foodAmount, milkSource: '喂食'),
+    );
+    if (result != null) setState(() => _foodAmount = result);
+  }
+
+  Future<void> _pickWaterAmount() async {
+    final result = await showDialog<int>(
+      context: context,
+      builder: (_) => _AmountDialog(initial: _waterAmount, milkSource: '喂水'),
+    );
+    if (result != null) setState(() => _waterAmount = result);
+  }
+
   void _save() {
     final provider = Provider.of<AppProvider>(context, listen: false);
     final entry = FeedingEntry(
@@ -434,8 +509,10 @@ class _FeedingPageState extends State<FeedingPage> {
           ? widget.entry!.id
           : DateTime.now().millisecondsSinceEpoch.toString(),
       timestamp: _startTime,
-      amountMl: _amount,
+      amountMl: _milkSource == '喂食' ? _foodAmount : _waterAmount,
       milkSource: _milkSource,
+      foodAmountKcal: _milkSource == '喂食' || _milkSource == '喂食+喂水' ? _foodAmount : null,
+      waterAmountMl: _milkSource == '喂水' || _milkSource == '喂食+喂水' ? _waterAmount : null,
       notes: _notesCtrl.text.trim().isEmpty ? null : _notesCtrl.text.trim(),
     );
     if (_isEdit) {
@@ -472,7 +549,7 @@ class _AmountDialog extends StatefulWidget {
 
 class _AmountDialogState extends State<_AmountDialog> {
   late final _ctrl = TextEditingController(text: widget.initial.toString());
-  final _presets = [60, 90, 120, 150, 180, 210, 240, 270, 300, 400, 500];
+  final _presets = [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1200];
 
   String _getDialogTitle() {
     switch (widget.milkSource) {
@@ -488,7 +565,7 @@ class _AmountDialogState extends State<_AmountDialog> {
   String _getCustomLabel() {
     switch (widget.milkSource) {
       case '喂食':
-        return '自定义 (g)';
+        return '自定义 (kcal)';
       case '喂食+喂水':
         return '自定义 (mL)';
       default: // '喂水'
@@ -499,7 +576,7 @@ class _AmountDialogState extends State<_AmountDialog> {
   String _getUnit() {
     switch (widget.milkSource) {
       case '喂食':
-        return 'g';
+        return 'kcal';
       default: // '喂水', '喂食+喂水'
         return 'mL';
     }
