@@ -40,7 +40,7 @@ class AppStrings {
   static const String mixedMilk = '喂食+喂水';
   static const String milkSource = '投喂类型';
   static const String customMlInput = '自定义 mL';
-  static const String feedingPageTitle = '投喂';
+  static const String feedingPageTitle = '投喂记录';
   static const String milkSourceLabel = '投喂类型';
   static const String breastMilkOption = '喂水';
   static const String formulaMilkOption = '喂食';
@@ -75,7 +75,7 @@ class AppStrings {
   static const String pee = '解小';
   static const String poopPee = '解大+解小';
   static const String diaperStatus = '解便类型';
-  static const String diaperPageTitle = '解便';
+  static const String diaperPageTitle = '解便记录';
   static const String diaperStatusLabel = '解便类型';
   static const String notesHint = '选填';
   static const String saveButton = '保存';
@@ -99,7 +99,7 @@ class AppStrings {
   static const String sleepCount = '睡眠 {count}次';
   static const String startTime = '开始时间';
   static const String endTime = '结束时间';
-  static const String sleepPageTitle = '睡眠';
+  static const String sleepPageTitle = '睡眠记录';
   static const String sleepNotesHint = '选填';
 
   // ==================== 辅食模块 ====================
@@ -137,7 +137,7 @@ class AppStrings {
   static const String custom = '自定义';
   static const String eventName = '事件名';
   static const String enterEventName = '请输入事件名称';
-  static const String customPageTitle = '自定义';
+  static const String customPageTitle = '自定义记录';
   static const String eventNameLabel = '事件名';
   static const String enterEventNameHint = '请输入事件名称';
 

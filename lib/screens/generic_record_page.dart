@@ -91,7 +91,7 @@ class _GenericRecordPageState extends State<GenericRecordPage> {
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
-        title: Text(widget.type,
+        title: Text('${widget.type}记录',
             style: const TextStyle(
                 fontSize: 17,
                 fontWeight: FontWeight.w600,

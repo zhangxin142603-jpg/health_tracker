@@ -3,7 +3,7 @@ class AppEmojis {
   // 主要功能Emoji
   static const String feeding = '🍲';      // 投喂 - 原🍼
   static const String diaper = '🚽';       // 解便 - 原👶
-  static const String sleep = '😴';        // 睡眠 - 原🌙
+  static const String sleep = '🛌';        // 睡眠 - 原🌙
   static const String exercise = '🏃';     // 锻炼 - 原🚩
   static const String awareness = '🩺';    // 觉察 - 原🌡️
   static const String healing = '❤️';      // 疗愈 - 原💊
