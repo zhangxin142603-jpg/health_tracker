@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
@@ -198,23 +199,23 @@ class _HomePageState extends State<HomePage> {
               child: GestureDetector(
                 onTap: () => Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const ProfilePage()),
-                ),
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.25),
-                    shape: BoxShape.circle,
+                  PageRouteBuilder(
+                    pageBuilder: (context, animation, secondaryAnimation) => const ProfilePage(),
+                    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                      const begin = Offset(-1.0, 0.0);
+                      const end = Offset.zero;
+                      const curve = Curves.easeInOut;
+                      var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+                      var offsetAnimation = animation.drive(tween);
+                      return SlideTransition(
+                        position: offsetAnimation,
+                        child: child,
+                      );
+                    },
+                    transitionDuration: const Duration(milliseconds: 300),
                   ),
-                  child: const Center(
-                    child: Text('我',
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500)),
-                  ),
                 ),
+                child: _buildAvatar(context),
               ),
             ),
             // Date (centered, tappable)
@@ -264,6 +265,39 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  Widget _buildAvatar(BuildContext context) {
+    final provider = Provider.of<AppProvider>(context);
+    if (provider.userAvatarPath.isNotEmpty) {
+      return Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          image: DecorationImage(
+            image: FileImage(File(provider.userAvatarPath)),
+            fit: BoxFit.cover,
+          ),
+        ),
+      );
+    } else {
+      return Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: Color.fromARGB(64, 255, 255, 255),
+          shape: BoxShape.circle,
+        ),
+        child: const Center(
+          child: Text('我',
+              style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500)),
+        ),
+      );
+    }
+  }
+
   // ─── Summary card (expandable) ─────────────────────────────────────────────
 
   Widget _buildSummaryCard(AppProvider provider) {
@@ -301,7 +335,7 @@ class _HomePageState extends State<HomePage> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Color.fromARGB(10, 0, 0, 0),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -708,7 +742,7 @@ class _HomePageState extends State<HomePage> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Color.fromARGB(15, 0, 0, 0),
             blurRadius: 12,
             offset: const Offset(0, -2),
           ),
@@ -792,7 +826,7 @@ class _TimelineCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Color.fromARGB(10, 0, 0, 0),
               blurRadius: 6,
               offset: const Offset(0, 2),
             ),

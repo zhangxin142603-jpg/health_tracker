@@ -253,7 +253,7 @@ class _DiaperPageState extends State<DiaperPage> {
             TextField(
               controller: _notesCtrl,
               maxLines: 4,
-              maxLength: 200,
+              maxLength: 500,
               style: const TextStyle(fontSize: 14),
               decoration: InputDecoration(
                 hintText: AppLocalizations.of(context).diaperNotesHint,

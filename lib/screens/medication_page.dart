@@ -291,7 +291,7 @@ class _MedicationPageState extends State<MedicationPage> {
             TextField(
               controller: _notesCtrl,
               maxLines: 4,
-              maxLength: 200,
+              maxLength: 500,
               style: const TextStyle(fontSize: 14),
               decoration: const InputDecoration(
                 hintText: '选填',

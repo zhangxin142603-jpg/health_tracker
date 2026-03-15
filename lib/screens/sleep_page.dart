@@ -172,7 +172,7 @@ class _SleepPageState extends State<SleepPage> {
             TextField(
               controller: _notesCtrl,
               maxLines: 5,
-              maxLength: 200,
+              maxLength: 500,
               style: const TextStyle(fontSize: 14),
               decoration: InputDecoration(
                 hintText: AppLocalizations.of(context).sleepNotesHint,

@@ -172,7 +172,7 @@ class _GenericRecordPageState extends State<GenericRecordPage> {
             TextField(
               controller: _notesCtrl,
               maxLines: 5,
-              maxLength: 200,
+              maxLength: 500,
               style: const TextStyle(fontSize: 14),
               decoration: const InputDecoration(
                 hintText: '选填',

@@ -53,16 +53,16 @@ class ProfilePage extends StatelessWidget {
 
   Widget _buildAppBar(BuildContext context) {
     return SizedBox(
-      height: 52,
+      height: 56,
       child: Stack(
         alignment: Alignment.center,
         children: [
           // Back button
           Positioned(
-            left: 4,
+            left: 0,
             child: IconButton(
               icon: const Icon(Icons.arrow_back_ios_new,
-                  color: Color(0xFF333333), size: 20),
+                  color: Colors.black, size: 20),
               onPressed: () => Navigator.pop(context),
             ),
           ),
@@ -74,6 +74,13 @@ class ProfilePage extends StatelessWidget {
               fontWeight: FontWeight.w600,
               color: Color(0xFF222222),
             ),
+          ),
+          // Bottom divider - to match other pages
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Container(height: 0.5, color: const Color(0xFFDDDDDD)),
           ),
         ],
       ),
@@ -277,11 +284,11 @@ class _GoalsCard extends StatelessWidget {
       children: [
         _GoalRow(
           icon: Icons.water_drop_outlined,
-          label: '我的喝水目标',
+          label: '喂水目标',
           value: '${provider.waterGoalMl}ml',
           onTap: () => _editGoal(
             context,
-            title: '喝水目标',
+            title: '喂水目标',
             unit: 'ml',
             initial: provider.waterGoalMl,
             onSave: (v) => provider.updateGoals(waterGoalMl: v),
@@ -290,7 +297,7 @@ class _GoalsCard extends StatelessWidget {
         _Divider(),
         _GoalRow(
           icon: Icons.add_circle_outline,
-          label: '我的喂食目标',
+          label: '喂食目标',
           value: '${provider.foodGoalKcal}kcal',
           onTap: () => _editGoal(
             context,
@@ -303,11 +310,11 @@ class _GoalsCard extends StatelessWidget {
         _Divider(),
         _GoalRow(
           icon: Icons.person_outline,
-          label: '载体重量目标',
+          label: '体重目标',
           value: '${provider.weightGoalKg}kg',
           onTap: () => _editGoal(
             context,
-            title: '载体重量目标',
+            title: '体重目标',
             unit: 'kg',
             initial: provider.weightGoalKg,
             onSave: (v) => provider.updateGoals(weightGoalKg: v),
