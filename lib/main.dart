@@ -12,6 +12,7 @@ import 'screens/generic_record_page.dart';
 import 'screens/custom_page.dart';
 import 'screens/medication_page.dart';
 import 'screens/solid_food_page.dart';
+import 'screens/profile_page.dart';
 import 'l10n/app_localizations.dart';
 import 'constants/emojis.dart';
 
@@ -107,17 +108,23 @@ class _HomePageState extends State<HomePage> {
           .map((e) =>
               _Entry(timestamp: e.timestamp, type: 'diaper', id: e.id, data: e)),
       ...p.sleepEntries
-          .where((e) => _sameDay(e.startTime))
-          .map((e) => _Entry(
-              timestamp: e.startTime, type: 'sleep', id: e.id, data: e)),
+          .where((e) => _sameDay(e.startTime) || (e.endTime != null && _sameDay(e.endTime!)))
+          .map((e) {
+            final timestamp = (_sameDay(e.startTime) ? e.startTime : e.endTime)!;
+            return _Entry(timestamp: timestamp, type: 'sleep', id: e.id, data: e);
+          }),
       ...p.genericEntries
-          .where((e) => _sameDay(e.startTime))
-          .map((e) => _Entry(
-              timestamp: e.startTime, type: 'generic', id: e.id, data: e)),
+          .where((e) => _sameDay(e.startTime) || (e.endTime != null && _sameDay(e.endTime!)))
+          .map((e) {
+            final timestamp = (_sameDay(e.startTime) ? e.startTime : e.endTime)!;
+            return _Entry(timestamp: timestamp, type: 'generic', id: e.id, data: e);
+          }),
       ...p.customEntries
-          .where((e) => _sameDay(e.startTime))
-          .map((e) => _Entry(
-              timestamp: e.startTime, type: 'custom', id: e.id, data: e)),
+          .where((e) => _sameDay(e.startTime) || (e.endTime != null && _sameDay(e.endTime!)))
+          .map((e) {
+            final timestamp = (_sameDay(e.startTime) ? e.startTime : e.endTime)!;
+            return _Entry(timestamp: timestamp, type: 'custom', id: e.id, data: e);
+          }),
       ...p.medEntries
           .where((e) => _sameDay(e.timestamp))
           .map((e) =>
@@ -188,19 +195,25 @@ class _HomePageState extends State<HomePage> {
             // "我" avatar
             Padding(
               padding: const EdgeInsets.only(left: 14),
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.25),
-                  shape: BoxShape.circle,
+              child: GestureDetector(
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ProfilePage()),
                 ),
-                child: const Center(
-                  child: Text('我',
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w500)),
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.25),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Center(
+                    child: Text('我',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500)),
+                  ),
                 ),
               ),
             ),
@@ -259,11 +272,11 @@ class _HomePageState extends State<HomePage> {
     final diaperList =
         provider.diaperEntries.where((e) => _sameDay(e.timestamp)).toList();
     final sleepList =
-        provider.sleepEntries.where((e) => _sameDay(e.startTime)).toList();
+        provider.sleepEntries.where((e) => _sameDay(e.startTime) || (e.endTime != null && _sameDay(e.endTime!))).toList();
     final genericList =
-        provider.genericEntries.where((e) => _sameDay(e.startTime)).toList();
+        provider.genericEntries.where((e) => _sameDay(e.startTime) || (e.endTime != null && _sameDay(e.endTime!))).toList();
     final customList =
-        provider.customEntries.where((e) => _sameDay(e.startTime)).toList();
+        provider.customEntries.where((e) => _sameDay(e.startTime) || (e.endTime != null && _sameDay(e.endTime!))).toList();
 
     // Build summary parts
     final parts = <String>[];

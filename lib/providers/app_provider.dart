@@ -11,6 +11,13 @@ class AppProvider with ChangeNotifier {
   AppData get data => _data;
   bool get isLoading => _isLoading;
 
+  int get waterGoalMl => _data.waterGoalMl;
+  int get foodGoalKcal => _data.foodGoalKcal;
+  int get weightGoalKg => _data.weightGoalKg;
+  String get userName => _data.userName;
+  String get userMotto => _data.userMotto;
+  String get userAvatarPath => _data.userAvatarPath;
+
   List<FeedingEntry> get feedingEntries => _data.feedingEntries;
   List<MedEntry> get medEntries => _data.medEntries;
   List<DiaperEntry> get diaperEntries => _data.diaperEntries;
@@ -97,6 +104,22 @@ class AppProvider with ChangeNotifier {
 
   Future<void> updateCustom(CustomEntry e) async {
     _data = _data.updateCustom(e);
+    notifyListeners();
+    await _save();
+  }
+
+  Future<void> updateGoals({int? waterGoalMl, int? foodGoalKcal, int? weightGoalKg}) async {
+    _data = _data.copyWith(
+      waterGoalMl: waterGoalMl,
+      foodGoalKcal: foodGoalKcal,
+      weightGoalKg: weightGoalKg,
+    );
+    notifyListeners();
+    await _save();
+  }
+
+  Future<void> updateProfile({String? userName, String? userMotto, String? userAvatarPath}) async {
+    _data = _data.copyWith(userName: userName, userMotto: userMotto, userAvatarPath: userAvatarPath);
     notifyListeners();
     await _save();
   }

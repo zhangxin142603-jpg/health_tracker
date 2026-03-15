@@ -9,6 +9,16 @@ class AppData {
   final List<GenericEntry> genericEntries;
   final List<CustomEntry> customEntries;
 
+  // User goals
+  final int waterGoalMl;
+  final int foodGoalKcal;
+  final int weightGoalKg;
+
+  // User profile
+  final String userName;
+  final String userMotto;
+  final String userAvatarPath;
+
   AppData({
     List<FeedingEntry>? feedingEntries,
     List<MedEntry>? medEntries,
@@ -17,6 +27,12 @@ class AppData {
     List<SleepEntry>? sleepEntries,
     List<GenericEntry>? genericEntries,
     List<CustomEntry>? customEntries,
+    this.waterGoalMl = 2000,
+    this.foodGoalKcal = 2200,
+    this.weightGoalKg = 75,
+    this.userName = '张新',
+    this.userMotto = '口号凡是不轻松的时刻都是对生命的浪费！',
+    this.userAvatarPath = '',
   })  : feedingEntries = feedingEntries ?? [],
         medEntries = medEntries ?? [],
         diaperEntries = diaperEntries ?? [],
@@ -33,6 +49,12 @@ class AppData {
         'sleepEntries': sleepEntries.map((e) => e.toJson()).toList(),
         'genericEntries': genericEntries.map((e) => e.toJson()).toList(),
         'customEntries': customEntries.map((e) => e.toJson()).toList(),
+        'waterGoalMl': waterGoalMl,
+        'foodGoalKcal': foodGoalKcal,
+        'weightGoalKg': weightGoalKg,
+        'userName': userName,
+        'userMotto': userMotto,
+        'userAvatarPath': userAvatarPath,
       };
 
   factory AppData.fromJson(Map<String, dynamic> json) => AppData(
@@ -57,6 +79,12 @@ class AppData {
         customEntries: (json['customEntries'] as List? ?? [])
             .map((e) => CustomEntry.fromJson(e as Map<String, dynamic>))
             .toList(),
+        waterGoalMl: (json['waterGoalMl'] as int?) ?? 2000,
+        foodGoalKcal: (json['foodGoalKcal'] as int?) ?? 2200,
+        weightGoalKg: (json['weightGoalKg'] as int?) ?? 75,
+        userName: (json['userName'] as String?) ?? '张新',
+        userMotto: (json['userMotto'] as String?) ?? '口号凡是不轻松的时刻都是对生命的浪费！',
+        userAvatarPath: (json['userAvatarPath'] as String?) ?? '',
       );
 
   AppData copyWith({
@@ -67,6 +95,12 @@ class AppData {
     List<SleepEntry>? sleepEntries,
     List<GenericEntry>? genericEntries,
     List<CustomEntry>? customEntries,
+    int? waterGoalMl,
+    int? foodGoalKcal,
+    int? weightGoalKg,
+    String? userName,
+    String? userMotto,
+    String? userAvatarPath,
   }) =>
       AppData(
         feedingEntries: feedingEntries ?? this.feedingEntries,
@@ -76,6 +110,12 @@ class AppData {
         sleepEntries: sleepEntries ?? this.sleepEntries,
         genericEntries: genericEntries ?? this.genericEntries,
         customEntries: customEntries ?? this.customEntries,
+        waterGoalMl: waterGoalMl ?? this.waterGoalMl,
+        foodGoalKcal: foodGoalKcal ?? this.foodGoalKcal,
+        weightGoalKg: weightGoalKg ?? this.weightGoalKg,
+        userName: userName ?? this.userName,
+        userMotto: userMotto ?? this.userMotto,
+        userAvatarPath: userAvatarPath ?? this.userAvatarPath,
       );
 
   AppData addFeeding(FeedingEntry e) =>
