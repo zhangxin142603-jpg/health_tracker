@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -524,24 +525,61 @@ class _VersionCardState extends State<_VersionCard> {
   }
 
   Future<String> _getLatestVersion() async {
-    // 改为蒲公英地址，返回一个更高的版本号，提示用户更新
-    // 因为蒲公英API需要密钥，这里简化处理
-    final PackageInfo packageInfo = await PackageInfo.fromPlatform();
-    final currentVersion = packageInfo.version;
+    const pgyerUrl = 'https://www.pgyer.com/shenxinjilu';
+    final currentVersion = (await PackageInfo.fromPlatform()).version;
 
     try {
-      final parts = currentVersion.split('.');
-      if (parts.length >= 3) {
-        final patch = int.tryParse(parts[2]) ?? 0;
-        parts[2] = (patch + 1).toString();
-        return parts.join('.');
+      final response = await http.get(Uri.parse(pgyerUrl));
+      if (response.statusCode == 200) {
+        final html = response.body;
+
+        // 尝试多个正则表达式模式来查找版本号
+        // 模式1: v\d+\.\d+\.\d+ (例如 v1.2.1)
+        // 模式2: 版本.*?\d+\.\d+\.\d+ (例如 版本 1.2.1)
+        // 模式3: \d+\.\d+\.\d+ (纯数字版本号)
+
+        final RegExp versionPattern1 = RegExp(r'v(\d+\.\d+\.\d+)');
+        final RegExp versionPattern2 = RegExp(r'版本[^\d]*(\d+\.\d+\.\d+)');
+        final RegExp versionPattern3 = RegExp(r'\b(\d+\.\d+\.\d+)\b');
+
+        String? foundVersion;
+
+        // 尝试第一个模式
+        final match1 = versionPattern1.firstMatch(html);
+        if (match1 != null) {
+          foundVersion = match1.group(1);
+        }
+
+        // 如果没找到，尝试第二个模式
+        if (foundVersion == null) {
+          final match2 = versionPattern2.firstMatch(html);
+          if (match2 != null) {
+            foundVersion = match2.group(1);
+          }
+        }
+
+        // 如果还没找到，尝试第三个模式
+        if (foundVersion == null) {
+          final match3 = versionPattern3.firstMatch(html);
+          if (match3 != null) {
+            foundVersion = match3.group(1);
+          }
+        }
+
+        if (foundVersion != null) {
+          return foundVersion;
+        } else {
+          // 在页面中没有找到版本号，返回当前版本，避免错误提示更新
+          return currentVersion;
+        }
+      } else {
+        // HTTP请求失败，抛出异常，让上层处理网络错误
+        throw Exception('HTTP request failed with status ${response.statusCode}');
       }
     } catch (e) {
-      // 如果解析失败，返回一个更高的版本
+      // 网络异常或其他错误，重新抛出异常
+      rethrow;
     }
-
-    // 默认返回一个高版本
-    return '999.0.0';
   }
 
   int _compareVersions(String version1, String version2) {
