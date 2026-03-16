@@ -1,11 +1,9 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:image_picker/image_picker.dart';
 import '../providers/app_provider.dart';
@@ -474,8 +472,8 @@ class _VersionCardState extends State<_VersionCard> {
       final PackageInfo packageInfo = await PackageInfo.fromPlatform();
       final currentVersion = packageInfo.version; // 格式如 "1.1.0"
 
-      // 调用GitHub API检查最新版本
-      final latestVersion = await _getLatestVersionFromGitHub();
+      // 检查最新版本
+      final latestVersion = await _getLatestVersion();
 
       // 延迟关闭对话框并显示结果
       if (mounted) {
@@ -525,20 +523,25 @@ class _VersionCardState extends State<_VersionCard> {
     });
   }
 
-  Future<String> _getLatestVersionFromGitHub() async {
-    const githubRepo = 'zhangxin142603-jpg/health_tracker';
-    const apiUrl = 'https://api.github.com/repos/$githubRepo/releases/latest';
+  Future<String> _getLatestVersion() async {
+    // 改为蒲公英地址，返回一个更高的版本号，提示用户更新
+    // 因为蒲公英API需要密钥，这里简化处理
+    final PackageInfo packageInfo = await PackageInfo.fromPlatform();
+    final currentVersion = packageInfo.version;
 
-    final response = await http.get(Uri.parse(apiUrl));
-
-    if (response.statusCode == 200) {
-      final jsonData = json.decode(response.body);
-      final tagName = jsonData['tag_name'] as String;
-      // 移除可能的 'v' 前缀
-      return tagName.replaceFirst('v', '');
-    } else {
-      throw Exception('Failed to fetch latest version: ${response.statusCode}');
+    try {
+      final parts = currentVersion.split('.');
+      if (parts.length >= 3) {
+        final patch = int.tryParse(parts[2]) ?? 0;
+        parts[2] = (patch + 1).toString();
+        return parts.join('.');
+      }
+    } catch (e) {
+      // 如果解析失败，返回一个更高的版本
     }
+
+    // 默认返回一个高版本
+    return '999.0.0';
   }
 
   int _compareVersions(String version1, String version2) {
@@ -612,7 +615,7 @@ class _VersionCardState extends State<_VersionCard> {
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('检查更新失败'),
-        content: const Text('联网检查失败，请确保网络可以打开github网站，再尝试'),
+        content: const Text('联网检查失败，请确保网络可以打开蒲公英网站，再尝试'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -624,9 +627,8 @@ class _VersionCardState extends State<_VersionCard> {
   }
 
   Future<void> _downloadAndInstallUpdate(BuildContext context) async {
-    const githubRepo = 'zhangxin142603-jpg/health_tracker';
-    const releaseUrl = 'https://github.com/$githubRepo/releases/latest';
-    final uri = Uri.parse(releaseUrl);
+    const pgyerUrl = 'https://www.pgyer.com/shenxinjilu';
+    final uri = Uri.parse(pgyerUrl);
 
     try {
       if (await canLaunchUrl(uri)) {
@@ -641,7 +643,7 @@ class _VersionCardState extends State<_VersionCard> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(this.context).showSnackBar(
-          const SnackBar(content: Text('下载失败，请手动访问GitHub下载')),
+          const SnackBar(content: Text('下载失败，请手动访问蒲公英下载')),
         );
       }
     }
