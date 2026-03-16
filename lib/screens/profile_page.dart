@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -57,15 +58,6 @@ class ProfilePage extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          // Back button
-          Positioned(
-            left: 0,
-            child: IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new,
-                  color: Colors.black, size: 20),
-              onPressed: () => Navigator.pop(context),
-            ),
-          ),
           // Title
           const Text(
             '我的',
@@ -447,6 +439,13 @@ class _VersionCardState extends State<_VersionCard> {
           trailingValue: '当前版本号$_currentVersion',
           hasChevron: true,
           onTap: () => _checkForUpdates(context),
+        ),
+        _InfoRow(
+          icon: Icons.arrow_back,
+          label: '返回',
+          trailingValue: '',
+          hasChevron: false,
+          onTap: () => Navigator.pop(context),
         ),
       ],
     );
