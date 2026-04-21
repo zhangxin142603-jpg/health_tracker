@@ -314,7 +314,7 @@ class _MedicationPageState extends State<MedicationPage> {
           maxLength: 500,
           style: const TextStyle(fontSize: 14),
           decoration: const InputDecoration(
-            hintText: '选填',
+            hintText: '对应内观和转变步骤',
             hintStyle: TextStyle(color: Color(0xFFBBBBBB), fontSize: 14),
             border: InputBorder.none,
             counterStyle: TextStyle(color: Color(0xFFBBBBBB)),

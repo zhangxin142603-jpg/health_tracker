@@ -134,10 +134,10 @@ class AppStrings {
   static const String pump = '真我';
   static const String temperature = '觉察';
   static const String breastfeed = '未命名';
-  static const String custom = '自定义';
+  static const String custom = '学与教';
   static const String eventName = '事件名';
   static const String enterEventName = '请输入事件名称';
-  static const String customPageTitle = '自定义记录';
+  static const String customPageTitle = '学与教记录';
   static const String eventNameLabel = '事件名';
   static const String enterEventNameHint = '请输入事件名称';
 

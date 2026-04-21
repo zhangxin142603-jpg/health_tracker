@@ -388,7 +388,7 @@ class _HomePageState extends State<HomePage> {
       final cnt = genericList.where((e) => e.type == t).length;
       if (cnt > 0) parts.add('$t $cnt次');
     }
-    if (customList.isNotEmpty) parts.add('自定义 ${customList.length}次');
+    if (customList.isNotEmpty) parts.add('学与教 ${customList.length}次');
 
     final summaryText = parts.isEmpty
         ? AppLocalizations.of(context).todayNoRecords
@@ -598,7 +598,7 @@ class _HomePageState extends State<HomePage> {
       final first = customList.first;
       rows.add(
         _summaryRow(
-          '· 自定义',
+          '· 学与教',
           '${customList.length}次',
           first.eventName.isNotEmpty ? first.eventName : '',
           isParent: true,
@@ -858,7 +858,7 @@ class _HomePageState extends State<HomePage> {
         return _TimelineCard(
           emoji: AppEmojis.custom,
           emojiColor: const Color(0xFFFFF5E0),
-          title: e.eventName.isNotEmpty ? e.eventName : '自定义',
+          title: e.eventName.isNotEmpty ? e.eventName : '学与教',
           subtitle: e.notes,
           onTap: () => _goto(CustomPage(entry: e)),
         );
@@ -961,7 +961,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                   _BottomBtn(
                     AppEmojis.custom,
-                    '自定义',
+                    '学与教',
                     const Color(0xFFE8A020),
                     () => _goto(const CustomPage()),
                   ),

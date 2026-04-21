@@ -174,11 +174,11 @@ class _GenericRecordPageState extends State<GenericRecordPage> {
               maxLines: 5,
               maxLength: 500,
               style: const TextStyle(fontSize: 14),
-              decoration: const InputDecoration(
-                hintText: '选填',
-                hintStyle: TextStyle(color: Color(0xFFBBBBBB), fontSize: 14),
+              decoration: InputDecoration(
+                hintText: widget.type == '觉察' ? '三心二意' : widget.type == '疗愈' ? '对应内观和转变步骤' : widget.type == '真我' ? '觉知练习' : '选填',
+                hintStyle: const TextStyle(color: Color(0xFFBBBBBB), fontSize: 14),
                 border: InputBorder.none,
-                counterStyle: TextStyle(color: Color(0xFFBBBBBB)),
+                counterStyle: const TextStyle(color: Color(0xFFBBBBBB)),
               ),
             ),
           ],

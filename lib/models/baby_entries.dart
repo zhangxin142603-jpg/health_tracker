@@ -224,7 +224,7 @@ class GenericEntry {
 
   factory GenericEntry.fromJson(Map<String, dynamic> json) => GenericEntry(
         id: json['id'] as String,
-        type: json['type'] as String? ?? '自定义',
+        type: json['type'] as String? ?? '学与教',
         startTime: DateTime.parse(json['startTime'] as String),
         endTime: json['endTime'] != null
             ? DateTime.parse(json['endTime'] as String)
