@@ -163,7 +163,7 @@ class _SleepPageState extends State<SleepPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('备注',
+            Text(AppLocalizations.of(context).notes,
                 style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,

@@ -14,6 +14,9 @@ class AppLocalizations {
   String get clickToAdd => AppStrings.clickToAdd;
   String get todayNoRecords => AppStrings.todayNoRecords;
   String get today => AppStrings.today;
+  String get todayLabel => AppStrings.todayLabel;
+  String get pastLabel => AppStrings.pastLabel;
+  String get me => AppStrings.me;
   String get todayRecordsSummary => AppStrings.todayRecordsSummary;
   String get collapseDetails => AppStrings.collapseDetails;
   String get expandDetails => AppStrings.expandDetails;
@@ -30,6 +33,12 @@ class AppLocalizations {
   String hoursMinutesAgo(int hours, int minutes) =>
       AppStrings.getHoursMinutesAgo(hours, minutes);
   String get inProgress => AppStrings.inProgress;
+  String sleepEndLabel(String time) => AppStrings.sleepEndLabel.replaceAll('{time}', time);
+  String totalMlKcalLabel(int ml, int kcal) => AppStrings.totalMlKcalLabel.replaceAll('{mL}', ml.toString()).replaceAll('{kcal}', kcal.toString());
+  String hourMinuteLabel(int hours, int minutes) => AppStrings.hourMinuteLabel.replaceAll('{hours}', hours.toString()).replaceAll('{minutes}', minutes.toString());
+  String minuteLabel(int minutes) => AppStrings.minuteLabel.replaceAll('{minutes}', minutes.toString());
+  String hourLabel(int hours) => AppStrings.hourLabel.replaceAll('{hours}', hours.toString());
+  String totalHourMinuteLabel(int hours, int minutes) => AppStrings.totalHourMinuteLabel.replaceAll('{hours}', hours.toString()).replaceAll('{minutes}', minutes.toString());
 
   // ==================== 喂养模块 ====================
   String get feeding => AppStrings.feeding;
@@ -46,6 +55,11 @@ class AppLocalizations {
   String get milkAmountLabel => AppStrings.milkAmountLabel;
   String get milkAmountSelectorTitle => AppStrings.milkAmountSelectorTitle;
   String get customMlOption => AppStrings.customMlOption;
+  String get foodAmountSelectorTitle => AppStrings.foodAmountSelectorTitle;
+  String get totalAmountSelectorTitle => AppStrings.totalAmountSelectorTitle;
+  String get customKcal => AppStrings.customKcal;
+  String get kcalUnit => AppStrings.kcalUnit;
+  String get mlUnit => AppStrings.mlUnit;
 
   // ==================== 用药模块 ====================
   String get medication => AppStrings.medication;
@@ -92,7 +106,7 @@ class AppLocalizations {
   String get solidFoodRecord => AppStrings.solidFoodRecord;
   String solidFoodCount(int count) => AppStrings.getSolidFoodCount(count);
   String get eating => AppStrings.eating;
-  String get foodAmount => AppStrings.foodAmount;
+  String get solidFoodAmount => AppStrings.solidFoodAmount;
   String get quantity => AppStrings.quantity;
   String get foodType => AppStrings.foodType;
   String get multipleSelect => AppStrings.multipleSelect;
@@ -124,6 +138,8 @@ class AppLocalizations {
   String get formula => AppStrings.formula;
   String get pump => AppStrings.pump;
   String get temperature => AppStrings.temperature;
+  String get self => AppStrings.self;
+  String get healing => AppStrings.healing;
   String get breastfeed => AppStrings.breastfeed;
   String get custom => AppStrings.custom;
   String get customPageTitle => AppStrings.customPageTitle;
@@ -145,6 +161,10 @@ class AppLocalizations {
   String get diaperNotesHint => AppStrings.diaperNotesHint;
   String get medicationNotesHint => AppStrings.medicationNotesHint;
   String get solidFoodNotesHint => AppStrings.solidFoodNotesHint;
+  String get awarenessNotesHint => AppStrings.awarenessNotesHint;
+  String get healingNotesHint => AppStrings.healingNotesHint;
+  String get trueSelfNotesHint => AppStrings.trueSelfNotesHint;
+  String get learningTeachingNotesHint => AppStrings.learningTeachingNotesHint;
 
   // ==================== 便捷访问方法 ====================
 

@@ -283,7 +283,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      _isToday() ? '今日' : '过往',
+                      _isToday() ? AppLocalizations.of(context).todayLabel : AppLocalizations.of(context).pastLabel,
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 15,
@@ -334,10 +334,10 @@ class _HomePageState extends State<HomePage> {
           color: Color.fromARGB(64, 255, 255, 255),
           shape: BoxShape.circle,
         ),
-        child: const Center(
+        child: Center(
           child: Text(
-            '我',
-            style: TextStyle(
+            AppLocalizations.of(context).me,
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 15,
               fontWeight: FontWeight.w500,
@@ -384,7 +384,12 @@ class _HomePageState extends State<HomePage> {
     if (feedCount.isNotEmpty) parts.add('投喂 ${feedCount.length}次');
     if (diaperList.isNotEmpty) parts.add('解便 ${diaperList.length}次');
     if (sleepList.isNotEmpty) parts.add('睡眠 ${sleepList.length}次');
-    for (final t in ['锻炼', '觉察', '疗愈', '真我']) {
+    for (final t in [
+      AppLocalizations.of(context).milestone,
+      AppLocalizations.of(context).temperature,
+      AppLocalizations.of(context).healing,
+      AppLocalizations.of(context).self,
+    ]) {
       final cnt = genericList.where((e) => e.type == t).length;
       if (cnt > 0) parts.add('$t $cnt次');
     }
@@ -481,7 +486,7 @@ class _HomePageState extends State<HomePage> {
         (s, e) => s + (e.foodAmountKcal ?? 0),
       );
       final extra = totalKcal > 0
-          ? '共${totalMl}mL / ${totalKcal}kcal'
+          ? AppLocalizations.of(context).totalMlKcalLabel(totalMl, totalKcal)
           : AppLocalizations.of(context).totalMlLabel(totalMl);
       rows.add(
         _summaryRow(
@@ -573,7 +578,7 @@ class _HomePageState extends State<HomePage> {
         }
       }
       final durStr = totalMin > 0
-          ? '共${totalMin ~/ 60}小时${totalMin % 60}分钟'
+          ? AppLocalizations.of(context).totalHourMinuteLabel(totalMin ~/ 60, totalMin % 60)
           : '';
       rows.add(
         _summaryRow(
@@ -586,7 +591,12 @@ class _HomePageState extends State<HomePage> {
     }
 
     // Generic types
-    for (final t in ['锻炼', '觉察', '疗愈', '真我']) {
+    for (final t in [
+      AppLocalizations.of(context).milestone,
+      AppLocalizations.of(context).temperature,
+      AppLocalizations.of(context).healing,
+      AppLocalizations.of(context).self,
+    ]) {
       final list = genericList.where((e) => e.type == t).toList();
       if (list.isNotEmpty) {
         rows.add(_summaryRow('· $t', '${list.length}次', '', isParent: true));
@@ -707,13 +717,13 @@ class _HomePageState extends State<HomePage> {
     final diff = now.difference(entry.timestamp);
     final String ago;
     if (diff.inMinutes < 1) {
-      ago = '刚刚';
+      ago = AppLocalizations.of(context).justNow;
     } else if (diff.inMinutes < 60) {
-      ago = '${diff.inMinutes}分钟前';
+      ago = AppLocalizations.of(context).minutesAgo(diff.inMinutes);
     } else if (diff.inHours < 24) {
       final h = diff.inHours;
       final m = diff.inMinutes % 60;
-      ago = m > 0 ? '$h小时$m分钟前' : '$h小时前';
+      ago = m > 0 ? AppLocalizations.of(context).hoursMinutesAgo(h, m) : AppLocalizations.of(context).hoursAgo(h);
     } else {
       ago = DateFormat('MM-dd').format(entry.timestamp);
     }
@@ -825,7 +835,7 @@ class _HomePageState extends State<HomePage> {
       case 'sleep':
         final e = entry.data as SleepEntry;
         final endLabel = e.endTime != null
-            ? '(${DateFormat('HH:mm').format(e.endTime!)} 结束）'
+            ? AppLocalizations.of(context).sleepEndLabel(DateFormat('HH:mm').format(e.endTime!))
             : '';
         return _TimelineCard(
           emoji: AppEmojis.sleep,

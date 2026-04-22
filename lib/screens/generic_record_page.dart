@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../models/baby_entries.dart';
 import '../providers/app_provider.dart';
+import '../l10n/app_localizations.dart';
 
 const Color _kPurple = Color(0xFF7B6CF6);
 
@@ -163,8 +164,8 @@ class _GenericRecordPageState extends State<GenericRecordPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('备注',
-                style: TextStyle(
+            Text(AppLocalizations.of(context).notes,
+                style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
                     color: Colors.black)),
@@ -175,7 +176,7 @@ class _GenericRecordPageState extends State<GenericRecordPage> {
               maxLength: 500,
               style: const TextStyle(fontSize: 14),
               decoration: InputDecoration(
-                hintText: widget.type == '觉察' ? '三心二意' : widget.type == '疗愈' ? '对应内观和转变步骤' : widget.type == '真我' ? '觉知练习' : '选填',
+                hintText: widget.type == '觉察' ? AppLocalizations.of(context).awarenessNotesHint : widget.type == '疗愈' ? AppLocalizations.of(context).healingNotesHint : widget.type == '真我' ? AppLocalizations.of(context).trueSelfNotesHint : widget.type == '学与教' ? AppLocalizations.of(context).learningTeachingNotesHint : AppLocalizations.of(context).genericNotesHint,
                 hintStyle: const TextStyle(color: Color(0xFFBBBBBB), fontSize: 14),
                 border: InputBorder.none,
                 counterStyle: const TextStyle(color: Color(0xFFBBBBBB)),

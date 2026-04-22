@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../constants/emojis.dart';
 import '../models/baby_entries.dart';
 import '../providers/app_provider.dart';
+import '../l10n/app_localizations.dart';
 
 const Color _kPurple = Color(0xFF7B6CF6);
 
@@ -360,9 +361,9 @@ class _SolidFoodPageState extends State<SolidFoodPage> {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          '备注',
-          style: TextStyle(
+        Text(
+          AppLocalizations.of(context).notes,
+          style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w500,
             color: Colors.black,
@@ -373,9 +374,9 @@ class _SolidFoodPageState extends State<SolidFoodPage> {
           controller: _notesCtrl,
           maxLines: 4,
           style: const TextStyle(fontSize: 14),
-          decoration: const InputDecoration(
-            hintText: '选填',
-            hintStyle: TextStyle(color: Color(0xFFBBBBBB), fontSize: 14),
+          decoration: InputDecoration(
+            hintText: AppLocalizations.of(context).solidFoodNotesHint,
+            hintStyle: const TextStyle(color: Color(0xFFBBBBBB), fontSize: 14),
             border: InputBorder.none,
           ),
         ),

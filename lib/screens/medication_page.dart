@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../models/baby_entries.dart';
 import '../providers/app_provider.dart';
+import '../l10n/app_localizations.dart';
 
 const Color _kPurple = Color(0xFF7B6CF6);
 
@@ -299,9 +300,9 @@ class _MedicationPageState extends State<MedicationPage> {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          '备注',
-          style: TextStyle(
+        Text(
+          AppLocalizations.of(context).notes,
+          style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w500,
             color: Colors.black,
@@ -313,11 +314,11 @@ class _MedicationPageState extends State<MedicationPage> {
           maxLines: 4,
           maxLength: 500,
           style: const TextStyle(fontSize: 14),
-          decoration: const InputDecoration(
-            hintText: '对应内观和转变步骤',
-            hintStyle: TextStyle(color: Color(0xFFBBBBBB), fontSize: 14),
+          decoration: InputDecoration(
+            hintText: AppLocalizations.of(context).healingNotesHint,
+            hintStyle: const TextStyle(color: Color(0xFFBBBBBB), fontSize: 14),
             border: InputBorder.none,
-            counterStyle: TextStyle(color: Color(0xFFBBBBBB)),
+            counterStyle: const TextStyle(color: Color(0xFFBBBBBB)),
           ),
         ),
       ],

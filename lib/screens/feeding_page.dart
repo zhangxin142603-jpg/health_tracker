@@ -554,11 +554,11 @@ class _AmountDialogState extends State<_AmountDialog> {
   String _getDialogTitle() {
     switch (widget.milkSource) {
       case '喂食':
-        return '食量选择';
+        return AppLocalizations.of(context).foodAmountSelectorTitle;
       case '喂食+喂水':
-        return '总量选择';
+        return AppLocalizations.of(context).totalAmountSelectorTitle;
       default: // '喂水'
-        return '水量选择';
+        return AppLocalizations.of(context).milkAmountSelectorTitle;
     }
   }
 

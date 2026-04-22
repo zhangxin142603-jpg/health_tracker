@@ -7,8 +7,11 @@ class AppStrings {
   static const String clickToAdd = '点击下方按钮添加记录';
   static const String todayNoRecords = '今天暂无记录';
   static const String today = '今天';
+  static const String todayLabel = '今日';
+  static const String pastLabel = '过往';
   static const String all = '全部';
   static const String inviteFriends = '邀请好友';
+  static const String me = '我';
   static const String todayRecordsSummary = '今日记录情况';
   static const String collapseDetails = '收起详情';
   static const String expandDetails = '展开详情';
@@ -26,6 +29,14 @@ class AppStrings {
   static const String inProgress = '进行中';
   static const String date = '日期';
   static const String time = '时间';
+  static const String startTime = '开始时间';
+  static const String endTime = '结束时间';
+  static const String sleepEndLabel = '{time} 结束）';
+  static const String totalMlKcalLabel = '共{mL}mL / {kcal}kcal';
+  static const String hourMinuteLabel = '{hours}小时{minutes}分';
+  static const String minuteLabel = '{minutes}分';
+  static const String hourLabel = '{hours}小时';
+  static const String totalHourMinuteLabel = '共{hours}小时{minutes}分钟';
 
   // ==================== 喂养模块 ====================
   static const String feeding = '投喂';
@@ -48,6 +59,13 @@ class AppStrings {
   static const String milkAmountLabel = '水量';
   static const String milkAmountSelectorTitle = '水量选择';
   static const String customMlOption = '自定义 mL';
+  static const String foodAmount = '食量';
+  static const String totalAmount = '总量';
+  static const String foodAmountSelectorTitle = '食量选择';
+  static const String totalAmountSelectorTitle = '总量选择';
+  static const String customKcal = '自定义 (kcal)';
+  static const String kcalUnit = 'kcal';
+  static const String mlUnit = 'mL';
 
   // ==================== 用药模块 ====================
   static const String medication = '觉察';
@@ -64,7 +82,7 @@ class AppStrings {
     '对乙酰氨基酚',
     '维生素D',
     '益生菌',
-    '其他'
+    '其他',
   ];
 
   // ==================== 尿布模块 ====================
@@ -97,8 +115,6 @@ class AppStrings {
   static const String sleep = '睡眠';
   static const String sleepRecord = '睡眠';
   static const String sleepCount = '睡眠 {count}次';
-  static const String startTime = '开始时间';
-  static const String endTime = '结束时间';
   static const String sleepPageTitle = '睡眠记录';
   static const String sleepNotesHint = '选填';
 
@@ -107,7 +123,7 @@ class AppStrings {
   static const String solidFoodRecord = '辅食记录';
   static const String solidFoodCount = '辅食 {count}次';
   static const String eating = '进食';
-  static const String foodAmount = '食量';
+  static const String solidFoodAmount = '食量';
   static const String quantity = '数量';
   static const String foodType = '食物类型';
   static const String multipleSelect = '多选';
@@ -118,7 +134,7 @@ class AppStrings {
     '谷物',
     '蛋白质',
     '乳制品',
-    '其他'
+    '其他',
   ];
   static const String liquid = '液体';
   static const String puree = '泥状';
@@ -132,6 +148,8 @@ class AppStrings {
   static const String milestone = '锻炼';
   static const String formula = '未命名2';
   static const String pump = '真我';
+  static const String self = '真我';
+  static const String healing = '疗愈';
   static const String temperature = '觉察';
   static const String breastfeed = '未命名';
   static const String custom = '学与教';
@@ -159,6 +177,10 @@ class AppStrings {
   static const String generalNotesHint = '选填';
   static const String optionalNotesHint = '选填';
   static const String genericNotesHint = '选填';
+  static const String learningTeachingNotesHint = '自我学习或分享、引导他人';
+  static const String awarenessNotesHint = '三心二意：重心、心跳、心情、意识、意愿';
+  static const String healingNotesHint = '内观到的子人格和如何帮助其转变';
+  static const String trueSelfNotesHint = '觉知练习、真我品质的展现';
 
   // ==================== 格式化方法 ====================
   /// 格式化带计数的字符串
@@ -170,17 +192,18 @@ class AppStrings {
   static String getFeedingCount(int count) => formatCount(feedingCount, count);
 
   /// 觉察计数
-  static String getMedicationCount(int count) => formatCount(medicationCount, count);
+  static String getMedicationCount(int count) =>
+      formatCount(medicationCount, count);
 
   /// 解便计数
   static String getDiaperCount(int count) => formatCount(diaperCount, count);
-
 
   /// 睡眠计数
   static String getSleepCount(int count) => formatCount(sleepCount, count);
 
   /// 辅食计数
-  static String getSolidFoodCount(int count) => formatCount(solidFoodCount, count);
+  static String getSolidFoodCount(int count) =>
+      formatCount(solidFoodCount, count);
 
   /// 时间格式化：分钟前
   static String getMinutesAgo(int minutes) => '$minutes$minutesAgo';

@@ -197,8 +197,8 @@ class _CustomPageState extends State<CustomPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('备注',
-                style: TextStyle(
+            Text(AppLocalizations.of(context).notes,
+                style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
                     color: Colors.black)),
@@ -208,11 +208,11 @@ class _CustomPageState extends State<CustomPage> {
               maxLines: 5,
               maxLength: 500,
               style: const TextStyle(fontSize: 14),
-              decoration: const InputDecoration(
-                hintText: '选填',
-                hintStyle: TextStyle(color: Color(0xFFBBBBBB), fontSize: 14),
+              decoration: InputDecoration(
+                hintText: AppLocalizations.of(context).learningTeachingNotesHint,
+                hintStyle: const TextStyle(color: Color(0xFFBBBBBB), fontSize: 14),
                 border: InputBorder.none,
-                counterStyle: TextStyle(color: Color(0xFFBBBBBB)),
+                counterStyle: const TextStyle(color: Color(0xFFBBBBBB)),
               ),
             ),
           ],
