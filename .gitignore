@@ -50,3 +50,7 @@ release-key.jks
 
 # Reference images directory
 cankao/
+
+# Backup files
+*.backup
+
