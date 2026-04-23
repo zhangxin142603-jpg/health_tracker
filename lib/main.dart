@@ -28,6 +28,9 @@ void main() {
 
 const Color kPrimary = Color(0xFF7B6CF6);
 const Color kPrimaryLight = Color(0xFF9B8FF9);
+const Color kBgLight = Color(0xFFEAE7FF);
+const Color kDateText = Color(0xFF2A1F6A);
+const Color kSubtitleText = Color(0xFF8B85B5);
 
 class BabyTrackerApp extends StatelessWidget {
   const BabyTrackerApp({super.key});
@@ -209,31 +212,33 @@ class _HomePageState extends State<HomePage> {
     final entries = _buildEntries(provider);
 
     return Scaffold(
-      backgroundColor: kPrimary,
-      body: Column(
-        children: [
-          _buildHeader(),
-          Expanded(
-            child: Container(
-              decoration: const BoxDecoration(
-                color: Color(0xFFF5F5F7),
-                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-              ),
-              child: Column(
-                children: [
-                  _buildSummaryCard(provider),
-                  const SizedBox(height: 8),
-                  Expanded(
-                    child: entries.isEmpty
-                        ? _buildEmpty()
-                        : _buildTimeline(context, entries, provider),
-                  ),
-                ],
-              ),
-            ),
+      backgroundColor: Colors.transparent,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFFD8D4FF),
+              Color(0xFFEAE7FF),
+              Color(0xFFF5F3FF),
+            ],
+            stops: [0.0, 0.35, 1.0],
           ),
-          _buildBottomBar(context, provider),
-        ],
+        ),
+        child: Column(
+          children: [
+            _buildHeader(),
+            _buildStatCards(provider),
+            const SizedBox(height: 8),
+            Expanded(
+              child: entries.isEmpty
+                  ? _buildEmpty()
+                  : _buildTimeline(context, entries, provider),
+            ),
+            _buildBottomBar(context, provider),
+          ],
+        ),
       ),
     );
   }
@@ -244,67 +249,54 @@ class _HomePageState extends State<HomePage> {
     final label = DateFormat('yyyy.MM.dd').format(_selectedDate);
     return SafeArea(
       bottom: false,
-      child: SizedBox(
-        height: 60,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 10, 8, 18),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // "我" avatar
-            Padding(
-              padding: const EdgeInsets.only(left: 14),
-              child: GestureDetector(
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const ProfilePage()),
-                ),
-                child: _buildAvatar(context),
+            GestureDetector(
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ProfilePage()),
               ),
+              child: _buildAvatar(context),
             ),
-            // Date (centered, tappable)
+            const SizedBox(width: 12),
             Expanded(
               child: GestureDetector(
                 onTap: _pickDate,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       label,
                       style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
+                        color: kDateText,
+                        fontSize: 26,
                         fontWeight: FontWeight.bold,
-                        letterSpacing: 0.5,
+                        letterSpacing: 1.0,
                       ),
                     ),
-                    const SizedBox(width: 4),
-                    const Icon(
-                      Icons.keyboard_arrow_down,
-                      color: Colors.white70,
-                      size: 22,
-                    ),
-                    const SizedBox(width: 4),
+                    const SizedBox(height: 3),
                     Text(
-                      _isToday() ? AppLocalizations.of(context).todayLabel : AppLocalizations.of(context).pastLabel,
+                      Provider.of<AppProvider>(context).userMotto,
                       style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w500,
+                        color: kSubtitleText,
+                        fontSize: 12,
                       ),
                     ),
                   ],
                 ),
               ),
             ),
-            // Left/Right day navigation
-            Padding(
-              padding: const EdgeInsets.only(right: 14),
-              child: IconButton(
-                icon: const Icon(
-                  Icons.calendar_month_outlined,
-                  color: Colors.white,
-                  size: 22,
-                ),
-                onPressed: _pickDate,
+            IconButton(
+              icon: const Icon(
+                Icons.calendar_month_outlined,
+                color: kPrimary,
+                size: 22,
               ),
+              onPressed: _pickDate,
             ),
           ],
         ),
@@ -331,16 +323,23 @@ class _HomePageState extends State<HomePage> {
         width: 40,
         height: 40,
         decoration: BoxDecoration(
-          color: Color.fromARGB(64, 255, 255, 255),
+          color: Colors.white,
           shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: kPrimary.withAlpha(40),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Center(
           child: Text(
             AppLocalizations.of(context).me,
             style: const TextStyle(
-              color: Colors.white,
+              color: kPrimary,
               fontSize: 15,
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ),
@@ -348,9 +347,47 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // ─── Summary card (expandable) ─────────────────────────────────────────────
+  // ─── Stat cards ────────────────────────────────────────────────────────────
 
-  Widget _buildSummaryCard(AppProvider provider) {
+  Widget _buildStatCards(AppProvider provider) {
+    final selfCount = provider.genericEntries
+        .where((e) => e.type == '真我')
+        .length;
+    final healingCount = provider.genericEntries
+        .where((e) => e.type == '疗愈')
+        .length;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+      child: Row(
+        children: [
+          _StatCard(
+            imagePath: 'assets/icons/spt_level.png',
+            title: 'SPT熟练度',
+            subtitle: '持续练习，稳步提升',
+            badge: '$healingCount',
+          ),
+          const SizedBox(width: 10),
+          _StatCard(
+            imagePath: 'assets/icons/true_self.png',
+            title: '真我显现度',
+            subtitle: '探索真我，追求真我',
+            badge: '$selfCount',
+          ),
+          const SizedBox(width: 10),
+          _StatCard(
+            imagePath: 'assets/icons/persona.png',
+            title: '子人格图鉴',
+            subtitle: '了解自己，统筹自己',
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─── Empty state ───────────────────────────────────────────────────────────
+
+  Widget _buildSummaryCard_UNUSED(AppProvider provider) {
     final feedCount = provider.feedingEntries
         .where((e) => _sameDay(e.timestamp))
         .toList();
@@ -765,10 +802,9 @@ class _HomePageState extends State<HomePage> {
                 width: 10,
                 height: 10,
                 margin: const EdgeInsets.only(top: 5),
-                decoration: BoxDecoration(
-                  color: Colors.white,
+                decoration: const BoxDecoration(
+                  color: Color(0xFF9B8FF9),
                   shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFFCCCCCC), width: 2),
                 ),
               ),
               if (!isLast)
@@ -940,9 +976,9 @@ class _HomePageState extends State<HomePage> {
                   ),
                   _BottomBtn(
                     AppEmojis.exercise,
-                    '锻炼',
+                    '运动',
                     const Color(0xFF9B8FF9),
-                    () => _goto(const GenericRecordPage(type: '锻炼')),
+                    () => _goto(const GenericRecordPage(type: '运动')),
                   ),
                 ],
               ),
@@ -971,7 +1007,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                   _BottomBtn(
                     AppEmojis.custom,
-                    '学与教',
+                    '自定义',
                     const Color(0xFFE8A020),
                     () => _goto(const CustomPage()),
                   ),
@@ -1032,7 +1068,7 @@ class _TimelineCard extends StatelessWidget {
               height: 44,
               decoration: BoxDecoration(
                 color: emojiColor,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(22),
               ),
               child: Center(
                 child: Text(emoji, style: const TextStyle(fontSize: 22)),
@@ -1108,6 +1144,106 @@ class _BottomBtn extends StatelessWidget {
                 fontWeight: FontWeight.w500,
               ),
               textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Stat card ─────────────────────────────────────────────────────────────────
+
+class _StatCard extends StatelessWidget {
+  final String imagePath;
+  final String title;
+  final String subtitle;
+  final String? badge;
+
+  const _StatCard({
+    required this.imagePath,
+    required this.title,
+    required this.subtitle,
+    this.badge,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(8, 12, 8, 10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: kPrimary.withAlpha(18),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            SizedBox(
+              height: 62,
+              child: Stack(
+                alignment: Alignment.center,
+                clipBehavior: Clip.none,
+                children: [
+                  Image.asset(
+                    imagePath,
+                    height: 56,
+                    fit: BoxFit.contain,
+                  ),
+                  if (badge != null && badge!.isNotEmpty)
+                    Positioned(
+                      top: -2,
+                      right: 0,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 5,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: kPrimary,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          badge!,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF333333),
+              ),
+              textAlign: TextAlign.center,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 2),
+            Text(
+              subtitle,
+              style: const TextStyle(
+                fontSize: 9,
+                color: Color(0xFFAAAAAA),
+              ),
+              textAlign: TextAlign.center,
+              overflow: TextOverflow.ellipsis,
+              maxLines: 2,
             ),
           ],
         ),
