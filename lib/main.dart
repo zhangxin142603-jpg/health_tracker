@@ -1007,7 +1007,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                   _BottomBtn(
                     AppEmojis.custom,
-                    '自定义',
+                    '学与教',
                     const Color(0xFFE8A020),
                     () => _goto(const CustomPage()),
                   ),
