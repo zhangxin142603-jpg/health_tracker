@@ -350,9 +350,6 @@ class _HomePageState extends State<HomePage> {
   // ─── Stat cards ────────────────────────────────────────────────────────────
 
   Widget _buildStatCards(AppProvider provider) {
-    final selfCount = provider.genericEntries
-        .where((e) => e.type == '真我')
-        .length;
     final healingCount = provider.genericEntries
         .where((e) => e.type == '疗愈')
         .length;
@@ -372,7 +369,7 @@ class _HomePageState extends State<HomePage> {
             imagePath: 'assets/icons/true_self.png',
             title: '真我显现度',
             subtitle: '探索真我，追求真我',
-            badge: '$selfCount',
+            iconSize: 88,
           ),
           const SizedBox(width: 10),
           _StatCard(
@@ -1159,44 +1156,34 @@ class _StatCard extends StatelessWidget {
   final String title;
   final String subtitle;
   final String? badge;
+  final double iconSize;
 
   const _StatCard({
     required this.imagePath,
     required this.title,
     required this.subtitle,
     this.badge,
+    this.iconSize = 72,
   });
 
   @override
   Widget build(BuildContext context) {
+    final boxSize = iconSize + 8;
     return Expanded(
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(8, 12, 8, 10),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: kPrimary.withAlpha(18),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            SizedBox(
-              height: 62,
-              child: Stack(
-                alignment: Alignment.center,
-                clipBehavior: Clip.none,
-                children: [
-                  Image.asset(
-                    imagePath,
-                    height: 56,
-                    fit: BoxFit.contain,
-                  ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            height: boxSize,
+            child: Stack(
+              alignment: Alignment.center,
+              clipBehavior: Clip.none,
+              children: [
+                Image.asset(
+                  imagePath,
+                  height: iconSize,
+                  fit: BoxFit.contain,
+                ),
                   if (badge != null && badge!.isNotEmpty)
                     Positioned(
                       top: -2,
@@ -1247,7 +1234,6 @@ class _StatCard extends StatelessWidget {
             ),
           ],
         ),
-      ),
     );
   }
 }
