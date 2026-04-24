@@ -32,13 +32,6 @@ const Color kBgLight = Color(0xFFEAE7FF);
 const Color kDateText = Color(0xFF2A1F6A);
 const Color kSubtitleText = Color(0xFF8B85B5);
 
-// 时间线圆点颜色
-const Color kDotAwareness = Color(0xFF7B6CF6);  // 觉察 - 紫色
-const Color kDotWater = Color(0xFFFFA726);      // 喝水 - 橙色
-const Color kDotFeeding = Color(0xFF66BB6A);    // 投喂 - 绿色
-const Color kDotExercise = Color(0xFF42A5F5);   // 运动 - 蓝色
-const Color kDotDefault = Color(0xFF9B8FF9);    // 默认 - 浅紫
-
 class BabyTrackerApp extends StatelessWidget {
   const BabyTrackerApp({super.key});
 
@@ -257,7 +250,7 @@ class _HomePageState extends State<HomePage> {
     return SafeArea(
       bottom: false,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 10, 8, 12),
+        padding: const EdgeInsets.fromLTRB(16, 10, 8, 18),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
@@ -280,45 +273,30 @@ class _HomePageState extends State<HomePage> {
                       label,
                       style: const TextStyle(
                         color: kDateText,
-                        fontSize: 28,
+                        fontSize: 26,
                         fontWeight: FontWeight.bold,
-                        letterSpacing: 0.5,
+                        letterSpacing: 1.0,
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      '持续记录，成为更好的自己 ✨',
-                      style: TextStyle(
+                    const SizedBox(height: 3),
+                    Text(
+                      Provider.of<AppProvider>(context).userMotto,
+                      style: const TextStyle(
                         color: kSubtitleText,
-                        fontSize: 13,
+                        fontSize: 12,
                       ),
                     ),
                   ],
                 ),
               ),
             ),
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: kPrimary.withAlpha(20),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+            IconButton(
+              icon: const Icon(
+                Icons.calendar_month_outlined,
+                color: kPrimary,
+                size: 22,
               ),
-              child: IconButton(
-                icon: const Icon(
-                  Icons.calendar_month_outlined,
-                  color: kPrimary,
-                  size: 22,
-                ),
-                onPressed: _pickDate,
-              ),
+              onPressed: _pickDate,
             ),
           ],
         ),
@@ -330,18 +308,10 @@ class _HomePageState extends State<HomePage> {
     final provider = Provider.of<AppProvider>(context);
     if (provider.userAvatarPath.isNotEmpty) {
       return Container(
-        width: 48,
-        height: 48,
+        width: 40,
+        height: 40,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          border: Border.all(color: Colors.white, width: 2),
-          boxShadow: [
-            BoxShadow(
-              color: kPrimary.withAlpha(30),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
           image: DecorationImage(
             image: FileImage(File(provider.userAvatarPath)),
             fit: BoxFit.cover,
@@ -350,25 +320,26 @@ class _HomePageState extends State<HomePage> {
       );
     } else {
       return Container(
-        width: 48,
-        height: 48,
+        width: 40,
+        height: 40,
         decoration: BoxDecoration(
-          color: const Color(0xFFE8E0FF),
+          color: Colors.white,
           shape: BoxShape.circle,
-          border: Border.all(color: Colors.white, width: 2),
           boxShadow: [
             BoxShadow(
-              color: kPrimary.withAlpha(30),
-              blurRadius: 8,
+              color: kPrimary.withAlpha(40),
+              blurRadius: 6,
               offset: const Offset(0, 2),
             ),
           ],
         ),
         child: Center(
           child: Text(
-            '👤',
+            AppLocalizations.of(context).me,
             style: const TextStyle(
-              fontSize: 24,
+              color: kPrimary,
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ),
@@ -387,28 +358,27 @@ class _HomePageState extends State<HomePage> {
         .length;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
       child: Row(
         children: [
           _StatCard(
-            emoji: '⚙️',
+            imagePath: 'assets/icons/spt_level.png',
             title: 'SPT熟练度',
             subtitle: '持续练习，稳步提升',
-            badge: '88',
+            badge: '$healingCount',
           ),
           const SizedBox(width: 10),
           _StatCard(
-            emoji: '📈',
+            imagePath: 'assets/icons/true_self.png',
             title: '真我显现度',
-            subtitle: '探索自我，活出真我',
+            subtitle: '探索真我，追求真我',
             badge: '$selfCount',
           ),
           const SizedBox(width: 10),
           _StatCard(
-            emoji: '🧩',
+            imagePath: 'assets/icons/persona.png',
             title: '子人格图鉴',
-            subtitle: '了解自己，接纳自己',
-            badge: null,
+            subtitle: '了解自己，统筹自己',
           ),
         ],
       ),
@@ -774,32 +744,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Color _getDotColor(String type, dynamic data) {
-    switch (type) {
-      case 'generic':
-        final e = data as GenericEntry;
-        if (e.type == '觉察') return kDotAwareness;
-        if (e.type == '运动') return kDotExercise;
-        return kDotDefault;
-      case 'feeding':
-        final e = data as FeedingEntry;
-        if (e.milkSource == '喂水') return kDotWater;
-        return kDotFeeding;
-      case 'diaper':
-        return kDotDefault;
-      case 'sleep':
-        return const Color(0xFFFFB74D);
-      case 'custom':
-        return kDotDefault;
-      case 'med':
-        return const Color(0xFFEF5350);
-      case 'solidFood':
-        return const Color(0xFFFFB74D);
-      default:
-        return kDotDefault;
-    }
-  }
-
   Widget _buildTimelineRow(
     BuildContext context,
     _Entry entry,
@@ -810,18 +754,16 @@ class _HomePageState extends State<HomePage> {
     final diff = now.difference(entry.timestamp);
     final String ago;
     if (diff.inMinutes < 1) {
-      ago = '刚刚';
+      ago = AppLocalizations.of(context).justNow;
     } else if (diff.inMinutes < 60) {
-      ago = '${diff.inMinutes}分钟前';
+      ago = AppLocalizations.of(context).minutesAgo(diff.inMinutes);
     } else if (diff.inHours < 24) {
       final h = diff.inHours;
       final m = diff.inMinutes % 60;
-      ago = m > 0 ? '${h}小时${m}分钟前' : '${h}小时前';
+      ago = m > 0 ? AppLocalizations.of(context).hoursMinutesAgo(h, m) : AppLocalizations.of(context).hoursAgo(h);
     } else {
       ago = DateFormat('MM-dd').format(entry.timestamp);
     }
-
-    final dotColor = _getDotColor(entry.type, entry.data);
 
     return IntrinsicHeight(
       child: Row(
@@ -844,7 +786,7 @@ class _HomePageState extends State<HomePage> {
                 Text(
                   ago,
                   style: const TextStyle(
-                    fontSize: 11,
+                    fontSize: 10,
                     color: Color(0xFFAAAAAA),
                   ),
                   textAlign: TextAlign.right,
@@ -857,29 +799,21 @@ class _HomePageState extends State<HomePage> {
           Column(
             children: [
               Container(
-                width: 12,
-                height: 12,
-                margin: const EdgeInsets.only(top: 4),
-                decoration: BoxDecoration(
-                  color: dotColor,
+                width: 10,
+                height: 10,
+                margin: const EdgeInsets.only(top: 5),
+                decoration: const BoxDecoration(
+                  color: Color(0xFF9B8FF9),
                   shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 2),
-                  boxShadow: [
-                    BoxShadow(
-                      color: dotColor.withAlpha(60),
-                      blurRadius: 4,
-                      offset: const Offset(0, 1),
-                    ),
-                  ],
                 ),
               ),
               if (!isLast)
                 Expanded(
-                  child: Container(width: 2, color: const Color(0xFFE8E8E8)),
+                  child: Container(width: 1.5, color: const Color(0xFFE0E0E0)),
                 ),
             ],
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           // Card
           Expanded(
             child: Padding(
@@ -896,85 +830,89 @@ class _HomePageState extends State<HomePage> {
     switch (entry.type) {
       case 'feeding':
         final e = entry.data as FeedingEntry;
-        final emoji = '🍚';
-        final emojiColor = const Color(0xFFFFF3E0);
-        String subtitle = '';
-        if (e.milkSource == '喂水') {
-          subtitle = '${e.amountMl}mL';
-        } else if (e.milkSource == '喂食') {
-          subtitle = '${e.foodAmountKcal ?? e.amountMl}kcal';
-        } else {
-          subtitle = '${e.foodAmountKcal ?? 0}kcal';
-        }
+        final emoji = e.milkSource == '喂食'
+            ? AppEmojis.food
+            : e.milkSource == '喂食+喂水'
+            ? AppEmojis.waterAndFood
+            : AppEmojis.water;
+        final emojiColor = e.milkSource == '喂食'
+            ? const Color(0xFFFFF3E0)
+            : e.milkSource == '喂食+喂水'
+            ? const Color(0xFFF0EEFF)
+            : const Color(0xFFE3F0FC);
         return _TimelineCard(
           emoji: emoji,
           emojiColor: emojiColor,
-          title: '投喂',
-          subtitle: subtitle,
+          title: e.milkSource,
+          subtitle: e.notes,
+          trailing: e.milkSource == '喂食'
+              ? '${e.foodAmountKcal ?? e.amountMl}kcal'
+              : e.milkSource == '喂食+喂水'
+              ? '${e.foodAmountKcal ?? e.amountMl}kcal'
+              : '${e.amountMl}mL',
           onTap: () => _goto(FeedingPage(entry: e)),
         );
       case 'diaper':
         final e = entry.data as DiaperEntry;
+        final emoji = e.diaperType == 'wet'
+            ? AppEmojis.pee
+            : e.diaperType == 'poop'
+            ? AppEmojis.poop
+            : AppEmojis.both;
         return _TimelineCard(
-          emoji: '🚽',
-          emojiColor: const Color(0xFFE3F2FD),
-          title: '解便',
-          subtitle: e.typeLabel,
+          emoji: emoji,
+          emojiColor: e.diaperType == 'wet'
+              ? const Color(0xFFE3F0FC)
+              : const Color(0xFFFFF3E0),
+          title: e.typeLabel,
+          subtitle: e.notes,
           onTap: () => _goto(DiaperPage(entry: e)),
         );
       case 'sleep':
         final e = entry.data as SleepEntry;
-        String subtitle = '';
-        if (e.endTime != null) {
-          final duration = e.endTime!.difference(e.startTime);
-          subtitle = '${duration.inMinutes}分钟';
-        }
+        final endLabel = e.endTime != null
+            ? AppLocalizations.of(context).sleepEndLabel(DateFormat('HH:mm').format(e.endTime!))
+            : '';
         return _TimelineCard(
-          emoji: '😴',
-          emojiColor: const Color(0xFFF3E5F5),
-          title: '睡眠',
-          subtitle: subtitle.isNotEmpty ? subtitle : null,
+          emoji: AppEmojis.sleep,
+          emojiColor: const Color(0xFFFFF8E1),
+          title: '睡眠$endLabel',
+          subtitle: e.notes,
+          trailing: e.durationText,
           onTap: () => _goto(SleepPage(entry: e)),
         );
       case 'generic':
         final e = entry.data as GenericEntry;
         final icons = {
-          '锻炼': ('🏃', const Color(0xFFFFF3E0)),
-          '觉察': ('🧘', const Color(0xFFE3F2FD)),
-          '疗愈': ('💝', const Color(0xFFFCE4EC)),
-          '真我': ('☀️', const Color(0xFFFFF8E1)),
-          '睡眠': ('😴', const Color(0xFFF3E5F5)),
+          '锻炼': (AppEmojis.exercise, const Color(0xFFFFEFDF)),
+          '觉察': (AppEmojis.awareness, const Color(0xFFE8F8F0)),
+          '疗愈': (AppEmojis.healing, const Color(0xFFF0EEFF)),
+          '真我': (AppEmojis.self, const Color(0xFFFFEEF0)),
+          '睡眠': (AppEmojis.sleep, const Color(0xFFFFF8E1)),
         };
-        final icon = icons[e.type] ?? (AppEmojis.custom, const Color(0xFFF5F5F5));
-        String subtitle = '';
-        if (e.endTime != null && e.startTime != null) {
-          final duration = e.endTime!.difference(e.startTime);
-          subtitle = '${duration.inMinutes}分钟';
-        } else if (e.notes != null && e.notes!.isNotEmpty) {
-          subtitle = e.notes!;
-        }
+        final icon =
+            icons[e.type] ?? (AppEmojis.custom, const Color(0xFFF5F5F5));
         return _TimelineCard(
           emoji: icon.$1,
           emojiColor: icon.$2,
           title: e.type,
-          subtitle: subtitle.isNotEmpty ? subtitle : null,
-          trailing: subtitle.contains('分钟') ? null : null,
+          subtitle: e.notes,
           onTap: () => _goto(GenericRecordPage(type: e.type, entry: e)),
         );
       case 'custom':
         final e = entry.data as CustomEntry;
         return _TimelineCard(
-          emoji: '📝',
+          emoji: AppEmojis.custom,
           emojiColor: const Color(0xFFFFF5E0),
-          title: e.eventName.isNotEmpty ? e.eventName : '自定义',
+          title: e.eventName.isNotEmpty ? e.eventName : '学与教',
           subtitle: e.notes,
           onTap: () => _goto(CustomPage(entry: e)),
         );
       case 'med':
         final e = entry.data as MedEntry;
         return _TimelineCard(
-          emoji: '💝',
-          emojiColor: const Color(0xFFFCE4EC),
+          emoji: AppEmojis.healing,
+          emojiColor: const Color(0xFFFFEEF0),
           title: '疗愈',
           subtitle: e.notes,
           onTap: () => _goto(MedicationPage()),
@@ -982,7 +920,7 @@ class _HomePageState extends State<HomePage> {
       case 'solidFood':
         final e = entry.data as SolidFoodEntry;
         return _TimelineCard(
-          emoji: '🥄',
+          emoji: AppEmojis.spoon,
           emojiColor: const Color(0xFFFFF3E0),
           title: '辅食',
           subtitle: e.notes,
@@ -999,22 +937,18 @@ class _HomePageState extends State<HomePage> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(24),
-          topRight: Radius.circular(24),
-        ),
         boxShadow: [
           BoxShadow(
-            color: kPrimary.withAlpha(15),
-            blurRadius: 20,
-            offset: const Offset(0, -4),
+            color: Color.fromARGB(15, 0, 0, 0),
+            blurRadius: 12,
+            offset: const Offset(0, -2),
           ),
         ],
       ),
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 16, 12, 12),
+          padding: const EdgeInsets.fromLTRB(0, 12, 0, 8),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -1022,21 +956,61 @@ class _HomePageState extends State<HomePage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _BottomBtn('🍚', '投喂', () => _goto(const FeedingPage())),
-                  _BottomBtn('🚽', '解便', () => _goto(const DiaperPage())),
-                  _BottomBtn('😴', '睡眠', () => _goto(const SleepPage())),
-                  _BottomBtn('🏃', '运动', () => _goto(const GenericRecordPage(type: '运动'))),
+                  _BottomBtn(
+                    AppEmojis.feeding,
+                    '投喂',
+                    const Color(0xFF5B9BD5),
+                    () => _goto(const FeedingPage()),
+                  ),
+                  _BottomBtn(
+                    AppEmojis.diaper,
+                    '解便',
+                    const Color(0xFF5B9BD5),
+                    () => _goto(const DiaperPage()),
+                  ),
+                  _BottomBtn(
+                    AppEmojis.sleep,
+                    '睡眠',
+                    const Color(0xFFE8A020),
+                    () => _goto(const SleepPage()),
+                  ),
+                  _BottomBtn(
+                    AppEmojis.exercise,
+                    '运动',
+                    const Color(0xFF9B8FF9),
+                    () => _goto(const GenericRecordPage(type: '运动')),
+                  ),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 4),
               // Row 2
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _BottomBtn('🧘', '觉察', () => _goto(const GenericRecordPage(type: '觉察'))),
-                  _BottomBtn('💝', '疗愈', () => _goto(const GenericRecordPage(type: '疗愈'))),
-                  _BottomBtn('☀️', '真我', () => _goto(const GenericRecordPage(type: '真我'))),
-                  _BottomBtn('📝', '自定义', () => _goto(const CustomPage())),
+                  _BottomBtn(
+                    AppEmojis.awareness,
+                    '觉察',
+                    const Color(0xFF3DB070),
+                    () => _goto(const GenericRecordPage(type: '觉察')),
+                  ),
+                  _BottomBtn(
+                    AppEmojis.healing,
+                    '疗愈',
+                    const Color(0xFF7B9BD5),
+                    () => _goto(const GenericRecordPage(type: '疗愈')),
+                  ),
+                  _BottomBtn(
+                    AppEmojis.self,
+                    '真我',
+                    const Color(0xFF3DB070),
+                    () => _goto(const GenericRecordPage(type: '真我')),
+                  ),
+                  _BottomBtn(
+                    AppEmojis.custom,
+                    '自定义',
+                    const Color(0xFFE8A020),
+                    () => _goto(const CustomPage()),
+                  ),
                 ],
               ),
             ],
@@ -1078,11 +1052,11 @@ class _TimelineCard extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
-              color: kPrimary.withAlpha(10),
-              blurRadius: 8,
+              color: Color.fromARGB(10, 0, 0, 0),
+              blurRadius: 6,
               offset: const Offset(0, 2),
             ),
           ],
@@ -1090,14 +1064,14 @@ class _TimelineCard extends StatelessWidget {
         child: Row(
           children: [
             Container(
-              width: 48,
-              height: 48,
+              width: 44,
+              height: 44,
               decoration: BoxDecoration(
                 color: emojiColor,
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(22),
               ),
               child: Center(
-                child: Text(emoji, style: const TextStyle(fontSize: 24)),
+                child: Text(emoji, style: const TextStyle(fontSize: 22)),
               ),
             ),
             const SizedBox(width: 12),
@@ -1111,22 +1085,28 @@ class _TimelineCard extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF333333),
+                      color: Color(0xFF222222),
                     ),
                   ),
                   if (subtitle != null && subtitle!.isNotEmpty)
                     Text(
                       subtitle!,
                       style: const TextStyle(
-                        fontSize: 13,
-                        color: Color(0xFF999999),
+                        fontSize: 12,
+                        color: Color(0xFFAAAAAA),
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, size: 20, color: Color(0xFFCCCCCC)),
+            if (trailing != null && trailing!.isNotEmpty)
+              Text(
+                trailing!,
+                style: const TextStyle(fontSize: 14, color: Color(0xFF999999)),
+              ),
+            const SizedBox(width: 4),
+            const Icon(Icons.chevron_right, size: 18, color: Color(0xFFCCCCCC)),
           ],
         ),
       ),
@@ -1139,38 +1119,28 @@ class _TimelineCard extends StatelessWidget {
 class _BottomBtn extends StatelessWidget {
   final String emoji;
   final String label;
+  final Color color;
   final VoidCallback onTap;
 
-  const _BottomBtn(this.emoji, this.label, this.onTap);
+  const _BottomBtn(this.emoji, this.label, this.color, this.onTap);
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
-      child: Container(
+      child: SizedBox(
         width: 72,
-        padding: const EdgeInsets.symmetric(vertical: 8),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 52,
-              height: 52,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF8F6FF),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Center(
-                child: Text(emoji, style: const TextStyle(fontSize: 28)),
-              ),
-            ),
-            const SizedBox(height: 6),
+            Text(emoji, style: const TextStyle(fontSize: 36)),
+            const SizedBox(height: 4),
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
-                color: Color(0xFF666666),
+                color: color,
                 fontWeight: FontWeight.w500,
               ),
               textAlign: TextAlign.center,
@@ -1185,13 +1155,13 @@ class _BottomBtn extends StatelessWidget {
 // ─── Stat card ─────────────────────────────────────────────────────────────────
 
 class _StatCard extends StatelessWidget {
-  final String emoji;
+  final String imagePath;
   final String title;
   final String subtitle;
   final String? badge;
 
   const _StatCard({
-    required this.emoji,
+    required this.imagePath,
     required this.title,
     required this.subtitle,
     this.badge,
@@ -1201,15 +1171,15 @@ class _StatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.fromLTRB(10, 14, 10, 12),
+        padding: const EdgeInsets.fromLTRB(8, 12, 8, 10),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: kPrimary.withAlpha(15),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
+              color: kPrimary.withAlpha(18),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
           ],
         ),
@@ -1217,44 +1187,28 @@ class _StatCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             SizedBox(
-              height: 48,
+              height: 62,
               child: Stack(
                 alignment: Alignment.center,
                 clipBehavior: Clip.none,
                 children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF5F3FF),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Center(
-                      child: Text(
-                        emoji,
-                        style: const TextStyle(fontSize: 24),
-                      ),
-                    ),
+                  Image.asset(
+                    imagePath,
+                    height: 56,
+                    fit: BoxFit.contain,
                   ),
                   if (badge != null && badge!.isNotEmpty)
                     Positioned(
-                      top: -4,
-                      right: -4,
+                      top: -2,
+                      right: 0,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
+                          horizontal: 5,
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
                           color: kPrimary,
                           borderRadius: BorderRadius.circular(10),
-                          boxShadow: [
-                            BoxShadow(
-                              color: kPrimary.withAlpha(40),
-                              blurRadius: 4,
-                              offset: const Offset(0, 1),
-                            ),
-                          ],
                         ),
                         child: Text(
                           badge!,
@@ -1269,11 +1223,11 @@ class _StatCard extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Text(
               title,
               style: const TextStyle(
-                fontSize: 12,
+                fontSize: 11,
                 fontWeight: FontWeight.w600,
                 color: Color(0xFF333333),
               ),
@@ -1284,12 +1238,12 @@ class _StatCard extends StatelessWidget {
             Text(
               subtitle,
               style: const TextStyle(
-                fontSize: 10,
-                color: Color(0xFF999999),
+                fontSize: 9,
+                color: Color(0xFFAAAAAA),
               ),
               textAlign: TextAlign.center,
               overflow: TextOverflow.ellipsis,
-              maxLines: 1,
+              maxLines: 2,
             ),
           ],
         ),
