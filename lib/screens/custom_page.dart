@@ -19,8 +19,8 @@ class CustomPage extends StatefulWidget {
 class _CustomPageState extends State<CustomPage> {
   late DateTime _startTime;
   DateTime? _endTime;
-  late final TextEditingController _eventNameCtrl;
   late final TextEditingController _notesCtrl;
+  String? _selectedTeachType;
 
   bool get _isEdit => widget.entry != null;
 
@@ -30,20 +30,18 @@ class _CustomPageState extends State<CustomPage> {
     if (_isEdit) {
       _startTime = widget.entry!.startTime;
       _endTime = widget.entry!.endTime;
-      _eventNameCtrl =
-          TextEditingController(text: widget.entry!.eventName);
       _notesCtrl = TextEditingController(text: widget.entry!.notes ?? '');
+      _selectedTeachType = widget.entry!.teachType;
     } else {
       _startTime = DateTime.now();
       _endTime = null;
-      _eventNameCtrl = TextEditingController();
       _notesCtrl = TextEditingController();
+      _selectedTeachType = null;
     }
   }
 
   @override
   void dispose() {
-    _eventNameCtrl.dispose();
     _notesCtrl.dispose();
     super.dispose();
   }
@@ -81,7 +79,7 @@ class _CustomPageState extends State<CustomPage> {
                         '结束时间', _endTime, _pickEndDate, _pickEndTime, true),
                   ]),
                   const SizedBox(height: 10),
-                  _eventNameSection(),
+                  _buildTeachTypeSection(),
                   const SizedBox(height: 10),
                   _notesSection(),
                 ],
@@ -164,32 +162,76 @@ class _CustomPageState extends State<CustomPage> {
         ),
       );
 
-  Widget _eventNameSection() => Container(
+  Widget _buildTeachTypeSection() => Container(
         color: Colors.white,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: Row(
           children: [
-            Text(AppLocalizations.of(context).eventNameLabel,
-                style: const TextStyle(fontSize: 16, color: Colors.black)),
+            const Text('学与教选择',
+                style: TextStyle(fontSize: 16, color: Colors.black)),
             const SizedBox(width: 16),
             Expanded(
-              child: TextField(
-                controller: _eventNameCtrl,
-                textAlign: TextAlign.right,
-                style: const TextStyle(fontSize: 15, color: Color(0xFF333333)),
-                decoration: InputDecoration(
-                  hintText: AppLocalizations.of(context).enterEventNameHint,
-                  hintStyle:
-                      const TextStyle(color: Color(0xFFBBBBBB), fontSize: 15),
-                  border: InputBorder.none,
-                  isDense: true,
-                  contentPadding: EdgeInsets.zero,
-                ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: ['学习', '教授'].map((t) {
+                  final selected = _selectedTeachType == t;
+                  return GestureDetector(
+                    onTap: () => _onTeachTypeTap(t),
+                    child: Container(
+                      margin: const EdgeInsets.only(left: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: selected ? _kPurple : const Color(0xFFF2F2F2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        t,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: selected
+                              ? Colors.white
+                              : const Color(0xFF555555),
+                          fontWeight:
+                              selected ? FontWeight.w500 : FontWeight.normal,
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
               ),
             ),
           ],
         ),
       );
+
+  void _onTeachTypeTap(String type) {
+    setState(() {
+      if (_selectedTeachType == type) {
+        _selectedTeachType = null;
+        _removeTeachTypeFromNotes();
+      } else {
+        _selectedTeachType = type;
+        _applyTeachTypeToNotes();
+      }
+    });
+  }
+
+  void _applyTeachTypeToNotes() {
+    var t = _notesCtrl.text;
+    t = t.replaceFirst(RegExp(r'^(?:学习|教授)\s?'), '');
+    _notesCtrl.text = '$_selectedTeachType $t';
+    _notesCtrl.selection =
+        TextSelection.collapsed(offset: _notesCtrl.text.length);
+  }
+
+  void _removeTeachTypeFromNotes() {
+    var t = _notesCtrl.text;
+    t = t.replaceFirst(RegExp(r'^(?:学习|教授)\s?'), '');
+    _notesCtrl.text = t;
+    _notesCtrl.selection =
+        TextSelection.collapsed(offset: _notesCtrl.text.length);
+  }
 
   Widget _notesSection() => Container(
         color: Colors.white,
@@ -322,8 +364,9 @@ class _CustomPageState extends State<CustomPage> {
           : DateTime.now().millisecondsSinceEpoch.toString(),
       startTime: _startTime,
       endTime: _endTime,
-      eventName: _eventNameCtrl.text.trim(),
+      eventName: _selectedTeachType ?? '',
       notes: _notesCtrl.text.trim().isEmpty ? null : _notesCtrl.text.trim(),
+      teachType: _selectedTeachType,
     );
     if (_isEdit) {
       provider.updateCustom(entry);

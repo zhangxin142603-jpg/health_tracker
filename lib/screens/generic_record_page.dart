@@ -21,8 +21,12 @@ class _GenericRecordPageState extends State<GenericRecordPage> {
   late DateTime _startTime;
   DateTime? _endTime;
   late final TextEditingController _notesCtrl;
+  int? _selectedScore;
+  String? _selectedHealingType;
 
   bool get _isEdit => widget.entry != null;
+
+  static const _scorePattern = r'^(?:10|[6-9])分\s?';
 
   @override
   void initState() {
@@ -31,10 +35,14 @@ class _GenericRecordPageState extends State<GenericRecordPage> {
       _startTime = widget.entry!.startTime;
       _endTime = widget.entry!.endTime;
       _notesCtrl = TextEditingController(text: widget.entry!.notes ?? '');
+      _selectedScore = widget.entry!.statusScore;
+      _selectedHealingType = widget.entry!.healingType;
     } else {
       _startTime = DateTime.now();
       _endTime = null;
       _notesCtrl = TextEditingController();
+      _selectedScore = null;
+      _selectedHealingType = null;
     }
   }
 
@@ -77,6 +85,10 @@ class _GenericRecordPageState extends State<GenericRecordPage> {
                         true),
                   ]),
                   const SizedBox(height: 10),
+                  if (widget.type == '觉察') _buildScoreSection(),
+                  if (widget.type == '觉察') const SizedBox(height: 10),
+                  if (widget.type == '疗愈') _buildHealingTypeSection(),
+                  if (widget.type == '疗愈') const SizedBox(height: 10),
                   _notesSection(),
                 ],
               ),
@@ -157,6 +169,149 @@ class _GenericRecordPageState extends State<GenericRecordPage> {
               )),
         ),
       );
+
+  Widget _buildScoreSection() => Container(
+        color: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
+            const Text('状态评分',
+                style: TextStyle(fontSize: 16, color: Colors.black)),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: ['10分', '9分', '8分', '7分', '6分'].map((s) {
+                  final scoreVal = int.parse(s.replaceAll('分', ''));
+                  final selected = _selectedScore == scoreVal;
+                  return GestureDetector(
+                    onTap: () => _onScoreTap(scoreVal),
+                    child: Container(
+                      margin: const EdgeInsets.only(left: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: selected ? _kPurple : const Color(0xFFF2F2F2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        s,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: selected
+                              ? Colors.white
+                              : const Color(0xFF555555),
+                          fontWeight:
+                              selected ? FontWeight.w500 : FontWeight.normal,
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ],
+        ),
+      );
+
+  void _onScoreTap(int score) {
+    setState(() {
+      if (_selectedScore == score) {
+        _selectedScore = null;
+        _removeScoreFromNotes();
+      } else {
+        _selectedScore = score;
+        _applyScoreToNotes();
+      }
+    });
+  }
+
+  void _applyScoreToNotes() {
+    var t = _notesCtrl.text;
+    t = t.replaceFirst(RegExp(_scorePattern), '');
+    _notesCtrl.text = '$_selectedScore分 $t';
+    _notesCtrl.selection =
+        TextSelection.collapsed(offset: _notesCtrl.text.length);
+  }
+
+  void _removeScoreFromNotes() {
+    var t = _notesCtrl.text;
+    t = t.replaceFirst(RegExp(_scorePattern), '');
+    _notesCtrl.text = t;
+    _notesCtrl.selection =
+        TextSelection.collapsed(offset: _notesCtrl.text.length);
+  }
+
+  Widget _buildHealingTypeSection() => Container(
+        color: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
+            const Text('子人格类型',
+                style: TextStyle(fontSize: 16, color: Colors.black)),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: ['欲望类子人格', '恐惧类子人格'].map((t) {
+                  final selected = _selectedHealingType == t;
+                  return GestureDetector(
+                    onTap: () => _onHealingTypeTap(t),
+                    child: Container(
+                      margin: const EdgeInsets.only(left: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: selected ? _kPurple : const Color(0xFFF2F2F2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        t,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: selected
+                              ? Colors.white
+                              : const Color(0xFF555555),
+                          fontWeight:
+                              selected ? FontWeight.w500 : FontWeight.normal,
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ],
+        ),
+      );
+
+  void _onHealingTypeTap(String type) {
+    setState(() {
+      if (_selectedHealingType == type) {
+        _selectedHealingType = null;
+        _removeHealingTypeFromNotes();
+      } else {
+        _selectedHealingType = type;
+        _applyHealingTypeToNotes();
+      }
+    });
+  }
+
+  void _applyHealingTypeToNotes() {
+    var t = _notesCtrl.text;
+    t = t.replaceFirst(RegExp(r'^(?:欲望类子人格|恐惧类子人格)\s?'), '');
+    _notesCtrl.text = '$_selectedHealingType $t';
+    _notesCtrl.selection =
+        TextSelection.collapsed(offset: _notesCtrl.text.length);
+  }
+
+  void _removeHealingTypeFromNotes() {
+    var t = _notesCtrl.text;
+    t = t.replaceFirst(RegExp(r'^(?:欲望类子人格|恐惧类子人格)\s?'), '');
+    _notesCtrl.text = t;
+    _notesCtrl.selection =
+        TextSelection.collapsed(offset: _notesCtrl.text.length);
+  }
 
   Widget _notesSection() => Container(
         color: Colors.white,
@@ -290,6 +445,8 @@ class _GenericRecordPageState extends State<GenericRecordPage> {
       startTime: _startTime,
       endTime: _endTime,
       notes: _notesCtrl.text.trim().isEmpty ? null : _notesCtrl.text.trim(),
+      statusScore: _selectedScore,
+      healingType: _selectedHealingType,
     );
     if (_isEdit) {
       provider.updateGeneric(entry);

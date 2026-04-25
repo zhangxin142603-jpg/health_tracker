@@ -205,6 +205,8 @@ class GenericEntry {
   final DateTime startTime;
   final DateTime? endTime;
   final String? notes;
+  final int? statusScore;
+  final String? healingType;
 
   const GenericEntry({
     required this.id,
@@ -212,6 +214,8 @@ class GenericEntry {
     required this.startTime,
     this.endTime,
     this.notes,
+    this.statusScore,
+    this.healingType,
   });
 
   Map<String, dynamic> toJson() => {
@@ -220,6 +224,8 @@ class GenericEntry {
         'startTime': startTime.toIso8601String(),
         'endTime': endTime?.toIso8601String(),
         'notes': notes,
+        'statusScore': statusScore,
+        'healingType': healingType,
       };
 
   factory GenericEntry.fromJson(Map<String, dynamic> json) => GenericEntry(
@@ -230,6 +236,8 @@ class GenericEntry {
             ? DateTime.parse(json['endTime'] as String)
             : null,
         notes: json['notes'] as String?,
+        statusScore: json['statusScore'] as int?,
+        healingType: json['healingType'] as String?,
       );
 }
 
@@ -239,6 +247,7 @@ class CustomEntry {
   final DateTime? endTime;
   final String eventName;
   final String? notes;
+  final String? teachType;
 
   const CustomEntry({
     required this.id,
@@ -246,6 +255,7 @@ class CustomEntry {
     this.endTime,
     required this.eventName,
     this.notes,
+    this.teachType,
   });
 
   Map<String, dynamic> toJson() => {
@@ -254,6 +264,7 @@ class CustomEntry {
         'endTime': endTime?.toIso8601String(),
         'eventName': eventName,
         'notes': notes,
+        'teachType': teachType,
       };
 
   factory CustomEntry.fromJson(Map<String, dynamic> json) => CustomEntry(
@@ -264,5 +275,6 @@ class CustomEntry {
             : null,
         eventName: json['eventName'] as String? ?? '',
         notes: json['notes'] as String?,
+        teachType: json['teachType'] as String?,
       );
 }
