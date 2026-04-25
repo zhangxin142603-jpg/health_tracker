@@ -406,7 +406,7 @@ class _HomePageState extends State<HomePage> {
     final customCount = provider.customEntries.length;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+      padding: const EdgeInsets.fromLTRB(16, 11, 16, 0),
       child: Row(
         children: [
           _StatCard(
@@ -872,7 +872,7 @@ class _HomePageState extends State<HomePage> {
           // Card
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.only(bottom: 8),
               child: _buildCard(context, entry),
             ),
           ),
@@ -1254,7 +1254,7 @@ class _TimelineCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(14),
