@@ -78,6 +78,21 @@ class _Entry {
   });
 }
 
+// ─── Orb animation data ───────────────────────────────────────────────────────────
+
+class _OrbData {
+  final int id;
+  final Offset source;
+  final Offset target;
+  final Color color;
+  _OrbData({
+    required this.id,
+    required this.source,
+    required this.target,
+    required this.color,
+  });
+}
+
 // ─── Home Page ─────────────────────────────────────────────────────────────────
 
 class HomePage extends StatefulWidget {
@@ -90,6 +105,15 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   DateTime _selectedDate = DateTime.now();
   bool _summaryExpanded = false;
+
+  // Orb animation
+  final _statKeys = [GlobalKey(), GlobalKey(), GlobalKey()];
+  final _stackKey = GlobalKey();
+  final _animatedEntryIds = <String>{};
+  final _entryDotKeys = <String, GlobalKey>{};
+  final _activeOrbs = <_OrbData>[];
+  int _nextOrbId = 0;
+  int _orbBuildCount = 0;
 
   bool _sameDay(DateTime dt) =>
       dt.year == _selectedDate.year &&
@@ -211,34 +235,58 @@ class _HomePageState extends State<HomePage> {
     final provider = Provider.of<AppProvider>(context);
     final entries = _buildEntries(provider);
 
+    // Detect new entries for orb animation
+    _orbBuildCount++;
+    final newEntryIds = <String>{};
+    for (final entry in entries) {
+      if (_animatedEntryIds.contains(entry.id)) continue;
+      if (_matchesAnimationRule(entry)) {
+        newEntryIds.add(entry.id);
+        _entryDotKeys.putIfAbsent(entry.id, () => GlobalKey());
+      }
+    }
+
+    if (_orbBuildCount <= 3) {
+      // First few builds: data may still be loading, silently mark entries
+      _animatedEntryIds.addAll(newEntryIds);
+    } else if (newEntryIds.isNotEmpty) {
+      _animatedEntryIds.addAll(newEntryIds);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        for (final id in newEntryIds) {
+          _startOrbAnimation(id);
+        }
+      });
+    }
+
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFD8D4FF),
-              Color(0xFFEAE7FF),
-              Color(0xFFF5F3FF),
-            ],
-            stops: [0.0, 0.35, 1.0],
-          ),
-        ),
-        child: Column(
-          children: [
-            _buildHeader(),
-            _buildStatCards(provider),
-            const SizedBox(height: 8),
-            Expanded(
-              child: entries.isEmpty
-                  ? _buildEmpty()
-                  : _buildTimeline(context, entries, provider),
+      body: Stack(
+        key: _stackKey,
+        children: [
+          Container(
+            decoration: const BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage('assets/background.png'),
+                fit: BoxFit.cover,
+              ),
             ),
-            _buildBottomBar(context, provider),
-          ],
-        ),
+            child: Column(
+              children: [
+                _buildHeader(),
+                _buildStatCards(provider),
+                const SizedBox(height: 8),
+                Expanded(
+                  child: entries.isEmpty
+                      ? _buildEmpty()
+                      : _buildTimeline(context, entries, provider),
+                ),
+                _buildBottomBar(context, provider),
+              ],
+            ),
+          ),
+          // Orb overlay
+          ..._activeOrbs.map(_buildOrbWidget),
+        ],
       ),
     );
   }
@@ -250,7 +298,7 @@ class _HomePageState extends State<HomePage> {
     return SafeArea(
       bottom: false,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 10, 8, 18),
+        padding: const EdgeInsets.fromLTRB(24, 10, 8, 18),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
@@ -261,7 +309,7 @@ class _HomePageState extends State<HomePage> {
               ),
               child: _buildAvatar(context),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 26),
             Expanded(
               child: GestureDetector(
                 onTap: _pickDate,
@@ -308,10 +356,11 @@ class _HomePageState extends State<HomePage> {
     final provider = Provider.of<AppProvider>(context);
     if (provider.userAvatarPath.isNotEmpty) {
       return Container(
-        width: 40,
-        height: 40,
+        width: 48,
+        height: 48,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
+          border: Border.all(color: kPrimaryLight, width: 2),
           image: DecorationImage(
             image: FileImage(File(provider.userAvatarPath)),
             fit: BoxFit.cover,
@@ -320,11 +369,12 @@ class _HomePageState extends State<HomePage> {
       );
     } else {
       return Container(
-        width: 40,
-        height: 40,
+        width: 48,
+        height: 48,
         decoration: BoxDecoration(
           color: Colors.white,
           shape: BoxShape.circle,
+          border: Border.all(color: kPrimaryLight, width: 2),
           boxShadow: [
             BoxShadow(
               color: kPrimary.withAlpha(40),
@@ -338,7 +388,7 @@ class _HomePageState extends State<HomePage> {
             AppLocalizations.of(context).me,
             style: const TextStyle(
               color: kPrimary,
-              fontSize: 15,
+              fontSize: 18,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -353,29 +403,33 @@ class _HomePageState extends State<HomePage> {
     final healingCount = provider.genericEntries
         .where((e) => e.type == '疗愈')
         .length;
+    final customCount = provider.customEntries.length;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
       child: Row(
         children: [
           _StatCard(
+            key: _statKeys[0],
             imagePath: 'assets/icons/spt_level.png',
             title: 'SPT熟练度',
-            subtitle: '持续练习，稳步提升',
-            badge: '$healingCount',
+            subtitle: '持续练习，提升技能',
+            badge: '${healingCount + customCount}',
           ),
           const SizedBox(width: 10),
           _StatCard(
+            key: _statKeys[1],
             imagePath: 'assets/icons/true_self.png',
             title: '真我显现度',
-            subtitle: '探索真我，追求真我',
-            iconSize: 88,
+            subtitle: '展现真我，随心而动',
+            imageHeight: 75,
           ),
           const SizedBox(width: 10),
           _StatCard(
+            key: _statKeys[2],
             imagePath: 'assets/icons/persona.png',
             title: '子人格图鉴',
-            subtitle: '了解自己，统筹自己',
+            subtitle: '探索内在，疗愈自我',
           ),
         ],
       ),
@@ -612,7 +666,9 @@ class _HomePageState extends State<HomePage> {
         }
       }
       final durStr = totalMin > 0
-          ? AppLocalizations.of(context).totalHourMinuteLabel(totalMin ~/ 60, totalMin % 60)
+          ? AppLocalizations.of(
+              context,
+            ).totalHourMinuteLabel(totalMin ~/ 60, totalMin % 60)
           : '';
       rows.add(
         _summaryRow(
@@ -757,7 +813,9 @@ class _HomePageState extends State<HomePage> {
     } else if (diff.inHours < 24) {
       final h = diff.inHours;
       final m = diff.inMinutes % 60;
-      ago = m > 0 ? AppLocalizations.of(context).hoursMinutesAgo(h, m) : AppLocalizations.of(context).hoursAgo(h);
+      ago = m > 0
+          ? AppLocalizations.of(context).hoursMinutesAgo(h, m)
+          : AppLocalizations.of(context).hoursAgo(h);
     } else {
       ago = DateFormat('MM-dd').format(entry.timestamp);
     }
@@ -838,6 +896,7 @@ class _HomePageState extends State<HomePage> {
             ? const Color(0xFFF0EEFF)
             : const Color(0xFFE3F0FC);
         return _TimelineCard(
+          emojiKey: _entryDotKeys[entry.id],
           emoji: emoji,
           emojiColor: emojiColor,
           title: e.milkSource,
@@ -857,6 +916,7 @@ class _HomePageState extends State<HomePage> {
             ? AppEmojis.poop
             : AppEmojis.both;
         return _TimelineCard(
+          emojiKey: _entryDotKeys[entry.id],
           emoji: emoji,
           emojiColor: e.diaperType == 'wet'
               ? const Color(0xFFE3F0FC)
@@ -868,9 +928,12 @@ class _HomePageState extends State<HomePage> {
       case 'sleep':
         final e = entry.data as SleepEntry;
         final endLabel = e.endTime != null
-            ? AppLocalizations.of(context).sleepEndLabel(DateFormat('HH:mm').format(e.endTime!))
+            ? AppLocalizations.of(
+                context,
+              ).sleepEndLabel(DateFormat('HH:mm').format(e.endTime!))
             : '';
         return _TimelineCard(
+          emojiKey: _entryDotKeys[entry.id],
           emoji: AppEmojis.sleep,
           emojiColor: const Color(0xFFFFF8E1),
           title: '睡眠$endLabel',
@@ -890,6 +953,7 @@ class _HomePageState extends State<HomePage> {
         final icon =
             icons[e.type] ?? (AppEmojis.custom, const Color(0xFFF5F5F5));
         return _TimelineCard(
+          emojiKey: _entryDotKeys[entry.id],
           emoji: icon.$1,
           emojiColor: icon.$2,
           title: e.type,
@@ -899,6 +963,7 @@ class _HomePageState extends State<HomePage> {
       case 'custom':
         final e = entry.data as CustomEntry;
         return _TimelineCard(
+          emojiKey: _entryDotKeys[entry.id],
           emoji: AppEmojis.custom,
           emojiColor: const Color(0xFFFFF5E0),
           title: e.eventName.isNotEmpty ? e.eventName : '学与教',
@@ -908,6 +973,7 @@ class _HomePageState extends State<HomePage> {
       case 'med':
         final e = entry.data as MedEntry;
         return _TimelineCard(
+          emojiKey: _entryDotKeys[entry.id],
           emoji: AppEmojis.healing,
           emojiColor: const Color(0xFFFFEEF0),
           title: '疗愈',
@@ -917,6 +983,7 @@ class _HomePageState extends State<HomePage> {
       case 'solidFood':
         final e = entry.data as SolidFoodEntry;
         return _TimelineCard(
+          emojiKey: _entryDotKeys[entry.id],
           emoji: AppEmojis.spoon,
           emojiColor: const Color(0xFFFFF3E0),
           title: '辅食',
@@ -931,84 +998,223 @@ class _HomePageState extends State<HomePage> {
   // ─── Bottom bar (2 rows × 4) ───────────────────────────────────────────────
 
   Widget _buildBottomBar(BuildContext context, AppProvider provider) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Color.fromARGB(15, 0, 0, 0),
-            blurRadius: 12,
-            offset: const Offset(0, -2),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Color.fromARGB(20, 0, 0, 0),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          top: false,
+          bottom: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(0, 12, 0, 8),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Row 1
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _BottomBtn(
+                      AppEmojis.feeding,
+                      '投喂',
+                      const Color(0xFF5B9BD5),
+                      () => _goto(const FeedingPage()),
+                    ),
+                    _BottomBtn(
+                      AppEmojis.diaper,
+                      '解便',
+                      const Color(0xFF5B9BD5),
+                      () => _goto(const DiaperPage()),
+                    ),
+                    _BottomBtn(
+                      AppEmojis.sleep,
+                      '睡眠',
+                      const Color(0xFFE8A020),
+                      () => _goto(const SleepPage()),
+                    ),
+                    _BottomBtn(
+                      AppEmojis.exercise,
+                      '运动',
+                      const Color(0xFF9B8FF9),
+                      () => _goto(const GenericRecordPage(type: '运动')),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                // Row 2
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _BottomBtn(
+                      AppEmojis.awareness,
+                      '觉察',
+                      const Color(0xFF3DB070),
+                      () => _goto(const GenericRecordPage(type: '觉察')),
+                    ),
+                    _BottomBtn(
+                      AppEmojis.healing,
+                      '疗愈',
+                      const Color(0xFF7B9BD5),
+                      () => _goto(const GenericRecordPage(type: '疗愈')),
+                    ),
+                    _BottomBtn(
+                      AppEmojis.self,
+                      '真我',
+                      const Color(0xFF3DB070),
+                      () => _goto(const GenericRecordPage(type: '真我')),
+                    ),
+                    _BottomBtn(
+                      AppEmojis.custom,
+                      '学与教',
+                      const Color(0xFFE8A020),
+                      () => _goto(const CustomPage()),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
-        ],
+        ),
       ),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(0, 12, 0, 8),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Row 1
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _BottomBtn(
-                    AppEmojis.feeding,
-                    '投喂',
-                    const Color(0xFF5B9BD5),
-                    () => _goto(const FeedingPage()),
-                  ),
-                  _BottomBtn(
-                    AppEmojis.diaper,
-                    '解便',
-                    const Color(0xFF5B9BD5),
-                    () => _goto(const DiaperPage()),
-                  ),
-                  _BottomBtn(
-                    AppEmojis.sleep,
-                    '睡眠',
-                    const Color(0xFFE8A020),
-                    () => _goto(const SleepPage()),
-                  ),
-                  _BottomBtn(
-                    AppEmojis.exercise,
-                    '运动',
-                    const Color(0xFF9B8FF9),
-                    () => _goto(const GenericRecordPage(type: '运动')),
-                  ),
-                ],
+    );
+  }
+
+  bool _matchesAnimationRule(_Entry entry) {
+    if (entry.type == 'custom') return true;
+    if (entry.type == 'generic') {
+      final t = (entry.data as GenericEntry).type;
+      return t == '觉察' || t == '疗愈' || t == '真我';
+    }
+    return false;
+  }
+
+  List<int> _getStatTargets(_Entry entry) {
+    if (entry.type == 'custom') return [0, 1];
+    if (entry.type == 'generic') {
+      final t = (entry.data as GenericEntry).type;
+      if (t == '觉察') return [1];
+      if (t == '疗愈') return [0, 1, 2];
+      if (t == '真我') return [1];
+    }
+    return [];
+  }
+
+  void _startOrbAnimation(String entryId) {
+    final dotKey = _entryDotKeys[entryId];
+    if (dotKey?.currentContext == null) return;
+
+    final entry = _findEntryById(entryId);
+    if (entry == null) return;
+
+    final targets = _getStatTargets(entry);
+    if (targets.isEmpty) return;
+
+    final dotRenderBox =
+        dotKey!.currentContext!.findRenderObject() as RenderBox?;
+    if (dotRenderBox == null) return;
+
+    final dotCenter = dotRenderBox.localToGlobal(
+      Offset(dotRenderBox.size.width / 2, dotRenderBox.size.height / 2),
+    );
+
+    final stackRenderBox =
+        _stackKey.currentContext?.findRenderObject() as RenderBox?;
+    if (stackRenderBox == null) return;
+
+    final sourceInStack = stackRenderBox.globalToLocal(dotCenter);
+
+    for (final targetIdx in targets) {
+      final statKey = _statKeys[targetIdx];
+      final statRenderBox =
+          statKey.currentContext?.findRenderObject() as RenderBox?;
+      if (statRenderBox == null) continue;
+
+      final statCenter = statRenderBox.localToGlobal(
+        Offset(statRenderBox.size.width / 2, statRenderBox.size.height / 2),
+      );
+      final targetInStack = stackRenderBox.globalToLocal(statCenter);
+
+      final orbId = _nextOrbId++;
+      final orbColor = kPrimaryLight;
+
+      setState(() {
+        _activeOrbs.add(
+          _OrbData(
+            id: orbId,
+            source: sourceInStack,
+            target: targetInStack,
+            color: orbColor,
+          ),
+        );
+      });
+      Future.delayed(const Duration(seconds: 2), () {
+        if (!mounted) return;
+        setState(() {
+          _activeOrbs.removeWhere((o) => o.id == orbId);
+        });
+      });
+    }
+  }
+
+  _Entry? _findEntryById(String id) {
+    final provider = Provider.of<AppProvider>(context, listen: false);
+    final entries = _buildEntries(provider);
+    for (final e in entries) {
+      if (e.id == id) return e;
+    }
+    return null;
+  }
+
+  Widget _buildOrbWidget(_OrbData data) {
+    return Positioned(
+      left: 0,
+      top: 0,
+      child: TweenAnimationBuilder<double>(
+        tween: Tween(begin: 0.0, end: 1.0),
+        duration: const Duration(seconds: 2),
+        curve: Curves.easeInOut,
+        builder: (context, progress, child) {
+          final currentOffset = Offset.lerp(
+            data.source,
+            data.target,
+            progress,
+          )!;
+          final opacity = progress < 0.1
+              ? progress / 0.1
+              : progress > 0.7
+              ? (1.0 - progress) / 0.3
+              : 1.0;
+          return Opacity(
+            opacity: opacity,
+            child: Transform.translate(offset: currentOffset, child: child),
+          );
+        },
+        child: Container(
+          width: 18,
+          height: 18,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: kPrimaryLight.withAlpha(180),
+                blurRadius: 12,
+                spreadRadius: 6,
               ),
-              const SizedBox(height: 4),
-              // Row 2
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _BottomBtn(
-                    AppEmojis.awareness,
-                    '觉察',
-                    const Color(0xFF3DB070),
-                    () => _goto(const GenericRecordPage(type: '觉察')),
-                  ),
-                  _BottomBtn(
-                    AppEmojis.healing,
-                    '疗愈',
-                    const Color(0xFF7B9BD5),
-                    () => _goto(const GenericRecordPage(type: '疗愈')),
-                  ),
-                  _BottomBtn(
-                    AppEmojis.self,
-                    '真我',
-                    const Color(0xFF3DB070),
-                    () => _goto(const GenericRecordPage(type: '真我')),
-                  ),
-                  _BottomBtn(
-                    AppEmojis.custom,
-                    '学与教',
-                    const Color(0xFFE8A020),
-                    () => _goto(const CustomPage()),
-                  ),
-                ],
+              BoxShadow(
+                color: kPrimaryLight.withAlpha(100),
+                blurRadius: 24,
+                spreadRadius: 12,
               ),
             ],
           ),
@@ -1031,6 +1237,7 @@ class _TimelineCard extends StatelessWidget {
   final String? subtitle;
   final String? trailing;
   final VoidCallback? onTap;
+  final Key? emojiKey;
 
   const _TimelineCard({
     required this.emoji,
@@ -1039,6 +1246,7 @@ class _TimelineCard extends StatelessWidget {
     this.subtitle,
     this.trailing,
     this.onTap,
+    this.emojiKey,
   });
 
   @override
@@ -1061,6 +1269,7 @@ class _TimelineCard extends StatelessWidget {
         child: Row(
           children: [
             Container(
+              key: emojiKey,
               width: 44,
               height: 44,
               decoration: BoxDecoration(
@@ -1156,84 +1365,76 @@ class _StatCard extends StatelessWidget {
   final String title;
   final String subtitle;
   final String? badge;
-  final double iconSize;
-
+  final double imageHeight;
   const _StatCard({
+    super.key,
     required this.imagePath,
     required this.title,
     required this.subtitle,
     this.badge,
-    this.iconSize = 72,
+    this.imageHeight = 72,
   });
 
   @override
   Widget build(BuildContext context) {
-    final boxSize = iconSize + 8;
     return Expanded(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           SizedBox(
-            height: boxSize,
+            height: 80,
             child: Stack(
-              alignment: Alignment.center,
+              alignment: Alignment.bottomCenter,
               clipBehavior: Clip.none,
               children: [
-                Image.asset(
-                  imagePath,
-                  height: iconSize,
-                  fit: BoxFit.contain,
-                ),
-                  if (badge != null && badge!.isNotEmpty)
-                    Positioned(
-                      top: -2,
-                      right: 0,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 5,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: kPrimary,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Text(
-                          badge!,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                          ),
+                Image.asset(imagePath, height: imageHeight, fit: BoxFit.contain),
+                if (badge != null && badge!.isNotEmpty)
+                  Positioned(
+                    top: -2,
+                    right: 0,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 5,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: kPrimary,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        badge!,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
-                ],
-              ),
+                  ),
+              ],
             ),
-            const SizedBox(height: 6),
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF333333),
-              ),
-              textAlign: TextAlign.center,
-              overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 6),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF333333),
             ),
-            const SizedBox(height: 2),
-            Text(
-              subtitle,
-              style: const TextStyle(
-                fontSize: 9,
-                color: Color(0xFFAAAAAA),
-              ),
-              textAlign: TextAlign.center,
-              overflow: TextOverflow.ellipsis,
-              maxLines: 2,
-            ),
-          ],
-        ),
+            textAlign: TextAlign.center,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 2),
+          Text(
+            subtitle,
+            style: const TextStyle(fontSize: 9, color: Color(0xFFAAAAAA)),
+            textAlign: TextAlign.center,
+            overflow: TextOverflow.ellipsis,
+            maxLines: 2,
+          ),
+        ],
+      ),
     );
   }
 }
