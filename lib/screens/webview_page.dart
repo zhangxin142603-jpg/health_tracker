@@ -4,7 +4,13 @@ import 'package:webview_flutter/webview_flutter.dart';
 const String feishuWikiUrl = 'https://tcn8v998v5li.feishu.cn/wiki/Xo6TwvYAgiBt06kzY20cDiLHn0c';
 
 class WebViewPage extends StatefulWidget {
-  const WebViewPage({super.key});
+  final String url;
+  final String title;
+  const WebViewPage({
+    super.key,
+    this.url = feishuWikiUrl,
+    this.title = '心态调整知识库',
+  });
 
   @override
   State<WebViewPage> createState() => _WebViewPageState();
@@ -19,7 +25,7 @@ class _WebViewPageState extends State<WebViewPage> {
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(Colors.white)
-      ..loadRequest(Uri.parse(feishuWikiUrl));
+      ..loadRequest(Uri.parse(widget.url));
   }
 
   @override
@@ -34,8 +40,8 @@ class _WebViewPageState extends State<WebViewPage> {
               color: Colors.black, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          '心态调整知识库',
+        title: Text(
+          widget.title,
           style: TextStyle(
             fontSize: 17,
             fontWeight: FontWeight.w600,

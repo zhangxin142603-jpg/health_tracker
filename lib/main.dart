@@ -18,6 +18,8 @@ import 'screens/medication_page.dart';
 import 'screens/profile_page.dart';
 import 'screens/sleep_page.dart';
 import 'screens/solid_food_page.dart';
+import 'screens/summary_page.dart';
+import 'screens/webview_page.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -113,7 +115,32 @@ class _HomePageState extends State<HomePage> {
   final _entryDotKeys = <String, GlobalKey>{};
   final _activeOrbs = <_OrbData>[];
   int _nextOrbId = 0;
-  int _orbBuildCount = 0;
+  bool _orbReady = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _markInitialEntries();
+      Future.delayed(const Duration(milliseconds: 600), () {
+        if (!mounted) return;
+        // Mark again in case data loaded asynchronously after first frame
+        _markInitialEntries();
+        _orbReady = true;
+      });
+    });
+  }
+
+  void _markInitialEntries() {
+    final provider = Provider.of<AppProvider>(context, listen: false);
+    final entries = _buildEntries(provider);
+    for (final entry in entries) {
+      if (_matchesAnimationRule(entry)) {
+        _animatedEntryIds.add(entry.id);
+      }
+    }
+  }
 
   bool _sameDay(DateTime dt) =>
       dt.year == _selectedDate.year &&
@@ -236,7 +263,6 @@ class _HomePageState extends State<HomePage> {
     final entries = _buildEntries(provider);
 
     // Detect new entries for orb animation
-    _orbBuildCount++;
     final newEntryIds = <String>{};
     for (final entry in entries) {
       if (_animatedEntryIds.contains(entry.id)) continue;
@@ -246,8 +272,8 @@ class _HomePageState extends State<HomePage> {
       }
     }
 
-    if (_orbBuildCount <= 3) {
-      // First few builds: data may still be loading, silently mark entries
+    if (!_orbReady) {
+      // Before first frame: silently mark entries as processed
       _animatedEntryIds.addAll(newEntryIds);
     } else if (newEntryIds.isNotEmpty) {
       _animatedEntryIds.addAll(newEntryIds);
@@ -415,6 +441,7 @@ class _HomePageState extends State<HomePage> {
             title: 'SPT熟练度',
             subtitle: '持续练习，提升技能',
             badge: '${healingCount + customCount}',
+            onTap: () => _goto(const WebViewPage()),
           ),
           const SizedBox(width: 10),
           _StatCard(
@@ -423,6 +450,10 @@ class _HomePageState extends State<HomePage> {
             title: '真我显现度',
             subtitle: '展现真我，随心而动',
             imageHeight: 75,
+            onTap: () => _goto(WebViewPage(
+              url: 'https://tcn8v998v5li.feishu.cn/docx/GmyAd2kXaojNbFx7Djkck6dznYw',
+              title: '真我显现度',
+            )),
           ),
           const SizedBox(width: 10),
           _StatCard(
@@ -430,6 +461,7 @@ class _HomePageState extends State<HomePage> {
             imagePath: 'assets/icons/persona.png',
             title: '子人格图鉴',
             subtitle: '探索内在，疗愈自我',
+            onTap: () => _goto(const SummaryPage()),
           ),
         ],
       ),
@@ -1091,20 +1123,29 @@ class _HomePageState extends State<HomePage> {
 
   bool _matchesAnimationRule(_Entry entry) {
     if (entry.type == 'custom') return true;
+    if (entry.type == 'feeding' ||
+        entry.type == 'diaper' ||
+        entry.type == 'sleep') {
+      return true;
+    }
     if (entry.type == 'generic') {
       final t = (entry.data as GenericEntry).type;
-      return t == '觉察' || t == '疗愈' || t == '真我';
+      return t == '觉察' || t == '疗愈' || t == '真我' || t == '锻炼';
     }
     return false;
   }
 
   List<int> _getStatTargets(_Entry entry) {
-    if (entry.type == 'custom') return [0, 1];
+    if (entry.type == 'custom') return [0, 1, 2];
+    if (entry.type == 'feeding' ||
+        entry.type == 'diaper' ||
+        entry.type == 'sleep') {
+      return [1];
+    }
     if (entry.type == 'generic') {
       final t = (entry.data as GenericEntry).type;
-      if (t == '觉察') return [1];
+      if (t == '锻炼' || t == '觉察' || t == '真我') return [1];
       if (t == '疗愈') return [0, 1, 2];
-      if (t == '真我') return [1];
     }
     return [];
   }
@@ -1366,6 +1407,7 @@ class _StatCard extends StatelessWidget {
   final String subtitle;
   final String? badge;
   final double imageHeight;
+  final VoidCallback? onTap;
   const _StatCard({
     super.key,
     required this.imagePath,
@@ -1373,13 +1415,16 @@ class _StatCard extends StatelessWidget {
     required this.subtitle,
     this.badge,
     this.imageHeight = 72,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
         children: [
           SizedBox(
             height: 80,
@@ -1435,6 +1480,7 @@ class _StatCard extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ),
+  );
   }
 }
