@@ -173,7 +173,7 @@ class _CustomPageState extends State<CustomPage> {
             Expanded(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
-                children: ['学习', '教授'].map((t) {
+                children: ['学习', '引导'].map((t) {
                   final selected = _selectedTeachType == t;
                   return GestureDetector(
                     onTap: () => _onTeachTypeTap(t),
@@ -219,7 +219,7 @@ class _CustomPageState extends State<CustomPage> {
 
   void _applyTeachTypeToNotes() {
     var t = _notesCtrl.text;
-    t = t.replaceFirst(RegExp(r'^(?:学习|教授)\s?'), '');
+    t = t.replaceFirst(RegExp(r'^(?:学习|引导)\s?'), '');
     _notesCtrl.text = '$_selectedTeachType $t';
     _notesCtrl.selection =
         TextSelection.collapsed(offset: _notesCtrl.text.length);
@@ -227,7 +227,7 @@ class _CustomPageState extends State<CustomPage> {
 
   void _removeTeachTypeFromNotes() {
     var t = _notesCtrl.text;
-    t = t.replaceFirst(RegExp(r'^(?:学习|教授)\s?'), '');
+    t = t.replaceFirst(RegExp(r'^(?:学习|引导)\s?'), '');
     _notesCtrl.text = t;
     _notesCtrl.selection =
         TextSelection.collapsed(offset: _notesCtrl.text.length);

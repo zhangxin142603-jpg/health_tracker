@@ -84,11 +84,13 @@ class _Entry {
 
 class _OrbData {
   final int id;
+  final int targetIdx;
   final Offset source;
   final Offset target;
   final Color color;
   _OrbData({
     required this.id,
+    required this.targetIdx,
     required this.source,
     required this.target,
     required this.color,
@@ -115,6 +117,7 @@ class _HomePageState extends State<HomePage> {
   final _entryDotKeys = <String, GlobalKey>{};
   final _activeOrbs = <_OrbData>[];
   int _nextOrbId = 0;
+  final _sweepCounters = [0, 0, 0];
   bool _orbReady = false;
 
   @override
@@ -320,7 +323,7 @@ class _HomePageState extends State<HomePage> {
   // ─── Header ────────────────────────────────────────────────────────────────
 
   Widget _buildHeader() {
-    final label = DateFormat('yyyy.MM.dd').format(_selectedDate);
+    final dateLabel = DateFormat('yyyy.MM.dd').format(_selectedDate);
     return SafeArea(
       bottom: false,
       child: Padding(
@@ -343,13 +346,28 @@ class _HomePageState extends State<HomePage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      label,
-                      style: const TextStyle(
-                        color: kDateText,
-                        fontSize: 26,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.0,
+                    RichText(
+                      text: TextSpan(
+                        children: [
+                          TextSpan(
+                            text: dateLabel,
+                            style: const TextStyle(
+                              color: kDateText,
+                              fontSize: 26,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.0,
+                            ),
+                          ),
+                          if (_isToday())
+                            const TextSpan(
+                              text: '  今日',
+                              style: TextStyle(
+                                color: kDateText,
+                                fontSize: 15,
+                                fontWeight: FontWeight.normal,
+                              ),
+                            ),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 3),
@@ -437,6 +455,7 @@ class _HomePageState extends State<HomePage> {
         children: [
           _StatCard(
             key: _statKeys[0],
+            sweepTrigger: _sweepCounters[0],
             imagePath: 'assets/icons/spt_level.png',
             title: 'SPT熟练度',
             subtitle: '持续练习，提升技能',
@@ -446,6 +465,7 @@ class _HomePageState extends State<HomePage> {
           const SizedBox(width: 10),
           _StatCard(
             key: _statKeys[1],
+            sweepTrigger: _sweepCounters[1],
             imagePath: 'assets/icons/true_self.png',
             title: '真我显现度',
             subtitle: '展现真我，随心而动',
@@ -458,6 +478,7 @@ class _HomePageState extends State<HomePage> {
           const SizedBox(width: 10),
           _StatCard(
             key: _statKeys[2],
+            sweepTrigger: _sweepCounters[2],
             imagePath: 'assets/icons/persona.png',
             title: '子人格图鉴',
             subtitle: '探索内在，疗愈自我',
@@ -984,11 +1005,14 @@ class _HomePageState extends State<HomePage> {
         };
         final icon =
             icons[e.type] ?? (AppEmojis.custom, const Color(0xFFF5F5F5));
+        final displayNames = {
+          '锻炼': '运动',
+        };
         return _TimelineCard(
           emojiKey: _entryDotKeys[entry.id],
           emoji: icon.$1,
           emojiColor: icon.$2,
-          title: e.type,
+          title: displayNames[e.type] ?? e.type,
           subtitle: e.notes,
           onTap: () => _goto(GenericRecordPage(type: e.type, entry: e)),
         );
@@ -1078,7 +1102,7 @@ class _HomePageState extends State<HomePage> {
                       AppEmojis.exercise,
                       '运动',
                       const Color(0xFF9B8FF9),
-                      () => _goto(const GenericRecordPage(type: '运动')),
+                      () => _goto(const GenericRecordPage(type: '锻炼')),
                     ),
                   ],
                 ),
@@ -1192,19 +1216,37 @@ class _HomePageState extends State<HomePage> {
         _activeOrbs.add(
           _OrbData(
             id: orbId,
+            targetIdx: targetIdx,
             source: sourceInStack,
             target: targetInStack,
             color: orbColor,
           ),
         );
       });
-      Future.delayed(const Duration(seconds: 2), () {
+
+      const orbDuration = 1200; // ms
+
+      // Trigger sweep just before orb arrives (at ~80%)
+      Future.delayed(Duration(milliseconds: (orbDuration * 0.8).toInt()), () {
+        if (!mounted) return;
+        _triggerSweep(targetIdx);
+      });
+
+      // Remove orb after animation completes
+      Future.delayed(Duration(milliseconds: orbDuration + 50), () {
         if (!mounted) return;
         setState(() {
           _activeOrbs.removeWhere((o) => o.id == orbId);
         });
       });
     }
+  }
+
+  void _triggerSweep(int targetIdx) {
+    if (!mounted) return;
+    setState(() {
+      _sweepCounters[targetIdx]++;
+    });
   }
 
   _Entry? _findEntryById(String id) {
@@ -1222,7 +1264,7 @@ class _HomePageState extends State<HomePage> {
       top: 0,
       child: TweenAnimationBuilder<double>(
         tween: Tween(begin: 0.0, end: 1.0),
-        duration: const Duration(seconds: 2),
+        duration: const Duration(milliseconds: 1200),
         curve: Curves.easeInOut,
         builder: (context, progress, child) {
           final currentOffset = Offset.lerp(
@@ -1402,6 +1444,7 @@ class _BottomBtn extends StatelessWidget {
 // ─── Stat card ─────────────────────────────────────────────────────────────────
 
 class _StatCard extends StatelessWidget {
+  final int sweepTrigger;
   final String imagePath;
   final String title;
   final String subtitle;
@@ -1410,6 +1453,7 @@ class _StatCard extends StatelessWidget {
   final VoidCallback? onTap;
   const _StatCard({
     super.key,
+    this.sweepTrigger = 0,
     required this.imagePath,
     required this.title,
     required this.subtitle,
@@ -1433,6 +1477,22 @@ class _StatCard extends StatelessWidget {
               clipBehavior: Clip.none,
               children: [
                 Image.asset(imagePath, height: imageHeight, fit: BoxFit.contain),
+                if (sweepTrigger > 0)
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: TweenAnimationBuilder<double>(
+                        key: ValueKey('sweep_$sweepTrigger'),
+                        tween: Tween(begin: 0.0, end: 1.0),
+                        duration: const Duration(milliseconds: 700),
+                        curve: Curves.easeOut,
+                        builder: (context, progress, _) {
+                          return CustomPaint(
+                            painter: _SweepPainter(progress: progress),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
                 if (badge != null && badge!.isNotEmpty)
                   Positioned(
                     top: -2,
@@ -1483,4 +1543,47 @@ class _StatCard extends StatelessWidget {
     ),
   );
   }
+}
+
+class _SweepPainter extends CustomPainter {
+  final double progress;
+
+  _SweepPainter({required this.progress});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    final bandPos = progress;
+    final bandWidth = 0.3;
+    final lightOpacity = (1.0 - progress) * 0.45;
+
+    final gradient = LinearGradient(
+      begin: Alignment.bottomCenter,
+      end: Alignment.topCenter,
+      colors: [
+        Colors.transparent,
+        Colors.white.withOpacity(0),
+        Colors.white.withOpacity(lightOpacity * 0.6),
+        Colors.white.withOpacity(lightOpacity),
+        Colors.white.withOpacity(lightOpacity * 0.6),
+        Colors.white.withOpacity(0),
+        Colors.transparent,
+      ],
+      stops: [
+        0.0,
+        (bandPos - bandWidth * 0.5).clamp(0.0, 1.0),
+        (bandPos - bandWidth * 0.25).clamp(0.0, 1.0),
+        bandPos.clamp(0.0, 1.0),
+        (bandPos + bandWidth * 0.25).clamp(0.0, 1.0),
+        (bandPos + bandWidth * 0.5).clamp(0.0, 1.0),
+        1.0,
+      ],
+    );
+
+    final paint = Paint()..shader = gradient.createShader(rect);
+    canvas.drawRect(rect, paint);
+  }
+
+  @override
+  bool shouldRepaint(_SweepPainter old) => old.progress != progress;
 }

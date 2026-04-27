@@ -20,9 +20,9 @@ class SummaryPage extends StatelessWidget {
         .where((e) => e.type == '疗愈')
         .toList();
 
-    // 学与教 entries where notes starts with "教授"
+    // 学与教 entries where notes starts with "引导"
     final teachEntries = provider.customEntries
-        .where((e) => e.notes != null && e.notes!.startsWith('教授'))
+        .where((e) => e.notes != null && e.notes!.startsWith('引导'))
         .toList();
 
     // Merge and sort by startTime descending
